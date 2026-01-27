@@ -30,6 +30,23 @@ var RAIN = {
 	dropsX: [],
 	dropsY: [],
 
+	// FUNCTIONS
+	// Function names are lower case with camelCaps
+
+	// RAIN.splash()
+	// "Splash" a bead when it reaches bottom row
+
+	splash : function ( x, y ) {
+		"use strict";
+
+		// Paint using background color
+
+		PS.color( x, y, RAIN.BG_COLOR );
+
+		// Play splash sound
+
+		PS.audioPlay( "fx_drip2" );
+	},
 
 	// RAIN.tick()
 	// Called on every clock tick
@@ -56,6 +73,10 @@ var RAIN = {
 			x = RAIN.dropsX[ i ];
 			y = RAIN.dropsY[ i ];
 
+			// If bead is above last row, erase it and redraw one bead lower
+
+			if ( y < RAIN.BOTTOM_ROW )
+			{
 				// erase the existing drop
 
 				PS.color( x, y, RAIN.BG_COLOR );
@@ -70,7 +91,21 @@ var RAIN = {
 
 				// Has drop reached the bottom row yet?
 
-				PS.color( x, y, RAIN.DROP_COLOR );
+				if ( y < RAIN.BOTTOM_ROW ) // nope
+				{
+					// Repaint the drop one bead lower
+
+					PS.color( x, y, RAIN.DROP_COLOR );
+				}
+
+				// Drop has reached bottom! Splash it!
+
+				else
+				{
+					RAIN.splash( x, y );
+				}
+
+				// point index to next drop
 
 				i += 1;
 			}
@@ -88,6 +123,7 @@ var RAIN = {
 
 				len -= 1;
 			}
+		}
 	}
 };
 
@@ -131,6 +167,33 @@ PS.init = function( system, options ) {
 	// Start the animation timer
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
+};
+
+// PS.touch ( x, y, data, options )
+// Called when the mouse button is clicked on a bead, or when a bead is touched
+
+PS.touch = function( x, y, data, options ) {
+	"use strict";
+
+	// If drop is above bottom row, start a drop
+
+	if ( y < RAIN.BOTTOM_ROW )
+	{
+		// Add initial X and Y positions of raindrop to animation list
+
+		RAIN.dropsX.push( x );
+		RAIN.dropsY.push( y );
+
+		PS.color( x, y, RAIN.DROP_COLOR ); // set the color
+		PS.audioPlay( "fx_drip1" ); // play drip sound
+	}
+
+	// Otherwise splash it immediately
+
+	else
+	{
+		RAIN.splash( x, y );
+	}
 };
 
 // These event calls aren't used by Simple Rain Toy
