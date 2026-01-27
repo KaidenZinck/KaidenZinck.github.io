@@ -30,23 +30,6 @@ var RAIN = {
 	dropsX: [],
 	dropsY: [],
 
-	// FUNCTIONS
-	// Function names are lower case with camelCaps
-
-	// RAIN.splash()
-	// "Splash" a bead when it reaches bottom row
-
-	splash : function ( x, y ) {
-		"use strict";
-
-		// Paint using background color
-
-		PS.color( x, y, RAIN.BG_COLOR );
-
-		// Play splash sound
-
-		PS.audioPlay( "fx_drip2" );
-	},
 
 	// RAIN.tick()
 	// Called on every clock tick
