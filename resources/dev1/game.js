@@ -29,6 +29,8 @@ var RAIN = {
 
 	dropsX: [],
 	dropsY: [],
+	dropsVX: [],
+	dropsVY: [],
 
 	// FUNCTIONS
 	// Function names are lower case with camelCaps
@@ -53,79 +55,57 @@ var RAIN = {
 	// Used to animate the raindrops
 
 	tick : function () {
-		"use strict";
-		var len, i, x, y;
+	"use strict";
+	var len, i, x, y, vx, vy;
 
-		// The length of the RAIN.DropsX array is the current number of drops
+	len = RAIN.dropsX.length;
+	i = 0;
 
-		len = RAIN.dropsX.length; // number of drops
+	while ( i < len ) {
+		x = RAIN.dropsX[i];
+		y = RAIN.dropsY[i];
+		vx = RAIN.dropsVX[i];
+		vy = RAIN.dropsVY[i];
 
-		// Loop through each active raindrop
-		// NOTE: We can't use a for/next loop in this case,
-		// because we need to dynamically modify the index variable [i]
-		// Javascript doesn't allow this in for/next loops
+		// erase old position
+		PS.color( x, y, RAIN.BG_COLOR );
 
-		i = 0;
-		while ( i < len )
-		{
-			// get current position of raindrop
+		// move drop
+		x += vx;
+		y += vy;
 
-			x = RAIN.dropsX[ i ];
-			y = RAIN.dropsY[ i ];
-
-			// If bead is above last row, erase it and redraw one bead lower
-
-			if ( y < RAIN.BOTTOM_ROW )
-			{
-				// erase the existing drop
-
-				PS.color( x, y, RAIN.BG_COLOR );
-
-				// add 1 to y position
-
-				y += 1;
-
-				// update its y position in the array
-
-				RAIN.dropsY[ i ] = y;
-
-				// Has drop reached the bottom row yet?
-
-				if ( y < RAIN.BOTTOM_ROW ) // nope
-				{
-					// Repaint the drop one bead lower
-
-					PS.color( x, y, RAIN.DROP_COLOR );
-				}
-
-				// Drop has reached bottom! Splash it!
-
-				else
-				{
-					RAIN.splash( x, y );
-				}
-
-				// point index to next drop
-
-				i += 1;
-			}
-
-			// Bead has already been splashed, so remove it from animation list
-
-			else
-			{
-				RAIN.dropsX.splice( i, 1 );
-				RAIN.dropsY.splice( i, 1 );
-
-				// Arrays are now one element smaller, so update the array length variable
-				// But leave the index variable [i] alone!
-				// It's already pointing at the next drop
-
-				len -= 1;
-			}
+		// bounce off left/right walls
+		if ( x < 0 ) {
+			x = 0;
+			vx = -vx;
 		}
+		else if ( x >= RAIN.GRID_WIDTH ) {
+			x = RAIN.GRID_WIDTH - 1;
+			vx = -vx;
+		}
+
+		// bounce off top/bottom walls
+		if ( y < 0 ) {
+			y = 0;
+			vy = -vy;
+		}
+		else if ( y >= RAIN.GRID_HEIGHT ) {
+			y = RAIN.GRID_HEIGHT - 1;
+			vy = -vy;
+		}
+
+		// store updated values
+		RAIN.dropsX[i] = x;
+		RAIN.dropsY[i] = y;
+		RAIN.dropsVX[i] = vx;
+		RAIN.dropsVY[i] = vy;
+
+		// redraw drop
+		PS.color( x, y, RAIN.DROP_COLOR );
+
+		i += 1;
 	}
-};
+}
 
 // PS.init( system, options )
 // Initializes the game
@@ -174,26 +154,19 @@ PS.init = function( system, options ) {
 
 PS.touch = function( x, y, data, options ) {
 	"use strict";
+	var vx, vy;
 
-	// If drop is above bottom row, start a drop
+	// random direction: -1 or +1
+	vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+	vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 
-	if ( y < RAIN.BOTTOM_ROW )
-	{
-		// Add initial X and Y positions of raindrop to animation list
+	RAIN.dropsX.push( x );
+	RAIN.dropsY.push( y );
+	RAIN.dropsVX.push( vx );
+	RAIN.dropsVY.push( vy );
 
-		RAIN.dropsX.push( x );
-		RAIN.dropsY.push( y );
-
-		PS.color( x, y, RAIN.DROP_COLOR ); // set the color
-		PS.audioPlay( "fx_drip1" ); // play drip sound
-	}
-
-	// Otherwise splash it immediately
-
-	else
-	{
-		RAIN.splash( x, y );
-	}
+	PS.color( x, y, RAIN.DROP_COLOR );
+	PS.audioPlay( "fx_drip1" );
 };
 
 // These event calls aren't used by Simple Rain Toy
