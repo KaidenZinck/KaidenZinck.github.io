@@ -56,10 +56,6 @@ var RAIN = {
 			x = RAIN.dropsX[ i ];
 			y = RAIN.dropsY[ i ];
 
-			// If bead is above last row, erase it and redraw one bead lower
-
-			if ( y < RAIN.BOTTOM_ROW )
-			{
 				// erase the existing drop
 
 				PS.color( x, y, RAIN.BG_COLOR );
@@ -74,21 +70,7 @@ var RAIN = {
 
 				// Has drop reached the bottom row yet?
 
-				if ( y < RAIN.BOTTOM_ROW ) // nope
-				{
-					// Repaint the drop one bead lower
-
-					PS.color( x, y, RAIN.DROP_COLOR );
-				}
-
-				// Drop has reached bottom! Splash it!
-
-				else
-				{
-					RAIN.splash( x, y );
-				}
-
-				// point index to next drop
+				PS.color( x, y, RAIN.DROP_COLOR );
 
 				i += 1;
 			}
@@ -106,7 +88,6 @@ var RAIN = {
 
 				len -= 1;
 			}
-		}
 	}
 };
 
