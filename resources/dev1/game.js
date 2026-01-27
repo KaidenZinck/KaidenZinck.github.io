@@ -169,33 +169,6 @@ PS.init = function( system, options ) {
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// PS.touch ( x, y, data, options )
-// Called when the mouse button is clicked on a bead, or when a bead is touched
-
-PS.touch = function( x, y, data, options ) {
-	"use strict";
-
-	// If drop is above bottom row, start a drop
-
-	if ( y < RAIN.BOTTOM_ROW )
-	{
-		// Add initial X and Y positions of raindrop to animation list
-
-		RAIN.dropsX.push( x );
-		RAIN.dropsY.push( y );
-
-		PS.color( x, y, RAIN.DROP_COLOR ); // set the color
-		PS.audioPlay( "fx_drip1" ); // play drip sound
-	}
-
-	// Otherwise splash it immediately
-
-	else
-	{
-		RAIN.splash( x, y );
-	}
-};
-
 // These event calls aren't used by Simple Rain Toy
 // But they must exist or the engine will complain!
 
