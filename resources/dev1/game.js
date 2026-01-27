@@ -87,7 +87,7 @@ PS.init = function( system, options ) {
 	PS.audioLoad( "fx_drip1", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Random Endless Rain" );
+	PS.statusText( "Random Endless Balls" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
