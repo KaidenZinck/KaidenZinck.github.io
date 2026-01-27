@@ -105,7 +105,7 @@ var RAIN = {
 
 		i += 1;
 	}
-}
+};
 
 // PS.init( system, options )
 // Initializes the game
