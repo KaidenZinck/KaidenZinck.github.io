@@ -94,6 +94,22 @@ PS.init = function( system, options ) {
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
+reset : function () {
+	"use strict";
+
+	// clear all drop data
+	RAIN.dropsX.length = 0;
+	RAIN.dropsY.length = 0;
+	RAIN.dropsVX.length = 0;
+	RAIN.dropsVY.length = 0;
+	RAIN.dropsColor.length = 0;
+
+	// clear grid
+	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+
+	PS.statusText( "Reset" );
+}
+
 // TOUCH – create a new random-colored drop
 PS.touch = function( x, y, data, options ) {
 	"use strict";
@@ -125,7 +141,13 @@ PS.release = function () { "use strict"; };
 PS.enter = function () { "use strict"; };
 PS.exit = function () { "use strict"; };
 PS.exitGrid = function () { "use strict"; };
-PS.keyDown = function () { "use strict"; };
+PS.keyDown = function ( key, shift, ctrl, options ) {
+	"use strict";
+
+	if ( key === PS.KEY_SPACE ) {
+		RAIN.reset();
+	}
+};
 PS.keyUp = function () { "use strict"; };
 PS.swipe = function () { "use strict"; };
 PS.input = function () { "use strict"; };
