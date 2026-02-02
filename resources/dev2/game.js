@@ -82,7 +82,8 @@ PS.init = function( system, options ) {
 
 	PS.gridSize( RAIN.GRID_WIDTH, RAIN.GRID_HEIGHT );
 	PS.gridColor( RAIN.BG_COLOR );
-	PS.border( PS.ALL, PS.ALL, 0 );
+	PS.border( PS.ALL, PS.ALL, 1 );
+	PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
 
 	PS.audioLoad( "fx_drip1", { lock : true } );
