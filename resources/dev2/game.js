@@ -28,7 +28,6 @@ var RAIN = {
 		i = 0;
 
 		while ( i < len ) {
-            PS.audioLoad( "fx_drip1", { lock : true } );
 			x = RAIN.dropsX[i];
 			y = RAIN.dropsY[i];
 			vx = RAIN.dropsVX[i];
@@ -46,7 +45,7 @@ var RAIN = {
 			if ( x < 0 ) {
 				x = 0;
 				vx = -vx;
-				PS.audioPlay( "fx_drip1" );
+				PS.audioPlay( "fx_silencer" );
 			}
 			else if ( x >= RAIN.GRID_WIDTH ) {
 				x = RAIN.GRID_WIDTH - 1;
@@ -56,7 +55,7 @@ var RAIN = {
 			if ( y < 0 ) {
 				y = 0;
 				vy = -vy;
-				PS.audioPlay( "fx_drip1" );
+				PS.audioPlay( "fx_silencer" );
 			}
 			else if ( y >= RAIN.GRID_HEIGHT ) {
 				y = RAIN.GRID_HEIGHT - 1;
@@ -87,6 +86,7 @@ PS.init = function( system, options ) {
 	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
 
 	PS.audioLoad( "fx_drip1", { lock : true } );
+	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
 	PS.statusText( "Random Endless Balls" );
