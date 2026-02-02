@@ -28,7 +28,7 @@ var RAIN = {
 		i = 0;
 
 		while ( i < len ) {
-
+            PS.audioLoad( "fx_drip1", { lock : true } );
 			x = RAIN.dropsX[i];
 			y = RAIN.dropsY[i];
 			vx = RAIN.dropsVX[i];
@@ -46,6 +46,7 @@ var RAIN = {
 			if ( x < 0 ) {
 				x = 0;
 				vx = -vx;
+				PS.audioPlay( "fx_drip1" );
 			}
 			else if ( x >= RAIN.GRID_WIDTH ) {
 				x = RAIN.GRID_WIDTH - 1;
@@ -55,6 +56,7 @@ var RAIN = {
 			if ( y < 0 ) {
 				y = 0;
 				vy = -vy;
+				PS.audioPlay( "fx_drip1" );
 			}
 			else if ( y >= RAIN.GRID_HEIGHT ) {
 				y = RAIN.GRID_HEIGHT - 1;
