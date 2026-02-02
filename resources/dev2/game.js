@@ -50,6 +50,7 @@ var RAIN = {
 			else if ( x >= RAIN.GRID_WIDTH ) {
 				x = RAIN.GRID_WIDTH - 1;
 				vx = -vx;
+				PS.audioPlay( "fx_silencer" );
 			}
 
 			if ( y < 0 ) {
@@ -60,6 +61,7 @@ var RAIN = {
 			else if ( y >= RAIN.GRID_HEIGHT ) {
 				y = RAIN.GRID_HEIGHT - 1;
 				vy = -vy;
+				PS.audioPlay( "fx_silencer" );
 			}
 
 			// store updates
