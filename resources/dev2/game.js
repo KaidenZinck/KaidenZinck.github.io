@@ -18,22 +18,42 @@ var RAIN = {
 		"use strict";
 		var x, y;
 
-		// Clear all borders
 		PS.border( PS.ALL, PS.ALL, 0 );
 
-		// Top & bottom
 		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
 			PS.border( x, 0, 1 );
 			PS.border( x, RAIN.GRID_HEIGHT - 1, 1 );
 		}
 
-		// Left & right
 		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
 			PS.border( 0, y, 1 );
 			PS.border( RAIN.GRID_WIDTH - 1, y, 1 );
 		}
 
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
+	},
+
+	// ADD A SINGLE DROP
+	addDrop : function ( x, y ) {
+		"use strict";
+		var vx, vy, color;
+
+		vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+
+		color = PS.makeRGB(
+			PS.random( 255 ),
+			PS.random( 255 ),
+			PS.random( 255 )
+		);
+
+		RAIN.dropsX.push( x );
+		RAIN.dropsY.push( y );
+		RAIN.dropsVX.push( vx );
+		RAIN.dropsVY.push( vy );
+		RAIN.dropsColor.push( color );
+
+		PS.color( x, y, color );
 	},
 
 	// MOVE DROPS
@@ -51,14 +71,11 @@ var RAIN = {
 			vy = RAIN.dropsVY[i];
 			color = RAIN.dropsColor[i];
 
-			// erase old position
 			PS.color( x, y, RAIN.BG_COLOR );
 
-			// move
 			x += vx;
 			y += vy;
 
-			// bounce off walls
 			if ( x < 0 ) {
 				x = 0;
 				vx = -vx;
@@ -81,15 +98,12 @@ var RAIN = {
 				PS.audioPlay( "fx_silencer" );
 			}
 
-			// store updates
 			RAIN.dropsX[i] = x;
 			RAIN.dropsY[i] = y;
 			RAIN.dropsVX[i] = vx;
 			RAIN.dropsVY[i] = vy;
 
-			// redraw
 			PS.color( x, y, color );
-
 			i += 1;
 		}
 	},
@@ -124,32 +138,23 @@ PS.init = function( system, options ) {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Random Endless Balls" );
+	PS.statusText( "Left click: 1 drop | Right click: 3 drops" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// TOUCH – add new drop
+// MOUSE CLICK
 PS.touch = function( x, y, data, options ) {
 	"use strict";
-	var vx, vy, color;
+	var i, count;
 
-	vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
-	vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+	// Right mouse button = 3 drops
+	count = ( options.button === PS.RIGHT ) ? 3 : 1;
 
-	color = PS.makeRGB(
-		PS.random( 255 ),
-		PS.random( 255 ),
-		PS.random( 255 )
-	);
+	for ( i = 0; i < count; i += 1 ) {
+		RAIN.addDrop( x, y );
+	}
 
-	RAIN.dropsX.push( x );
-	RAIN.dropsY.push( y );
-	RAIN.dropsVX.push( vx );
-	RAIN.dropsVY.push( vy );
-	RAIN.dropsColor.push( color );
-
-	PS.color( x, y, color );
 	PS.audioPlay( "fx_drip1" );
 };
 
