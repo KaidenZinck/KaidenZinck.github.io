@@ -13,6 +13,29 @@ var RAIN = {
 	dropsVY: [],
 	dropsColor: [],
 
+	// DRAW ONLY OUTER BORDER
+	drawOuterBorder : function () {
+		"use strict";
+		var x, y;
+
+		// Clear all borders
+		PS.border( PS.ALL, PS.ALL, 0 );
+
+		// Top & bottom
+		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
+			PS.border( x, 0, 1 );
+			PS.border( x, RAIN.GRID_HEIGHT - 1, 1 );
+		}
+
+		// Left & right
+		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
+			PS.border( 0, y, 1 );
+			PS.border( RAIN.GRID_WIDTH - 1, y, 1 );
+		}
+
+		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
+	},
+
 	// MOVE DROPS
 	tick : function () {
 		"use strict";
@@ -71,7 +94,7 @@ var RAIN = {
 		}
 	},
 
-	// RESET EVERYTHING
+	// RESET
 	reset : function () {
 		"use strict";
 
@@ -82,9 +105,7 @@ var RAIN = {
 		RAIN.dropsColor.length = 0;
 
 		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
-		PS.border( PS.ALL, PS.ALL, 1 );
-		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
-
+		RAIN.drawOuterBorder();
 		PS.statusText( "Reset" );
 	}
 };
@@ -95,9 +116,9 @@ PS.init = function( system, options ) {
 
 	PS.gridSize( RAIN.GRID_WIDTH, RAIN.GRID_HEIGHT );
 	PS.gridColor( RAIN.BG_COLOR );
-	PS.border( PS.ALL, PS.ALL, 1 );
-	PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+
+	RAIN.drawOuterBorder();
 
 	PS.audioLoad( "fx_drip1", { lock : true } );
 	PS.audioLoad( "fx_silencer", { lock : true } );
@@ -108,7 +129,7 @@ PS.init = function( system, options ) {
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// TOUCH – create a new random-colored drop
+// TOUCH – add new drop
 PS.touch = function( x, y, data, options ) {
 	"use strict";
 	var vx, vy, color;
@@ -132,7 +153,7 @@ PS.touch = function( x, y, data, options ) {
 	PS.audioPlay( "fx_drip1" );
 };
 
-// SPACE KEY RESET
+// SPACE KEY = RESET
 PS.keyDown = function ( key, shift, ctrl, options ) {
 	"use strict";
 
