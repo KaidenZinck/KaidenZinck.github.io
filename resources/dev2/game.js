@@ -36,13 +36,10 @@ var RAIN = {
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	},
 
-	// ADD ONE DROP
-	addDrop : function ( x, y ) {
+	// ADD DROP WITH SPECIFIC VELOCITY
+	addDrop : function ( x, y, vx, vy ) {
 		"use strict";
-		var vx, vy, color;
-
-		vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
-		vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		var color;
 
 		color = PS.makeRGB(
 			PS.random( 255 ),
@@ -141,20 +138,26 @@ PS.init = function () {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Click: 1 drop | Hold ALT: 3 drops" );
+	PS.statusText( "Click: 1 | Hold ALT: 3-shot spread" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// CLICK HANDLER
+// CLICK
 PS.touch = function( x, y ) {
 	"use strict";
-	var i, count;
 
-	count = RAIN.altDown ? 3 : 1;
-
-	for ( i = 0; i < count; i += 1 ) {
-		RAIN.addDrop( x, y );
+	if ( RAIN.altDown ) {
+		// Spread pattern
+		RAIN.addDrop( x, y, -1, 1 );
+		RAIN.addDrop( x, y,  0, 1 );
+		RAIN.addDrop( x, y,  1, 1 );
+	}
+	else {
+		// Single random drop
+		var vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		var vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		RAIN.addDrop( x, y, vx, vy );
 	}
 
 	PS.audioPlay( "fx_drip1" );
