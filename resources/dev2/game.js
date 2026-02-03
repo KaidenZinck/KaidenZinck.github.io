@@ -1,20 +1,21 @@
+
 var RAIN = {
 
 	// CONSTANTS
-	GRID_WIDTH: 24,
-	GRID_HEIGHT: 24,
-	FRAME_RATE: 6,
-	BG_COLOR: PS.COLOR_WHITE,
+	GRID_WIDTH : 24,
+	GRID_HEIGHT : 24,
+	FRAME_RATE : 6,
+	BG_COLOR : PS.COLOR_WHITE,
 
 	// MODE STATE
-	spreadOn: false,
+	spreadOn : false,
 
 	// VARIABLES
-	dropsX: [],
-	dropsY: [],
-	dropsVX: [],
-	dropsVY: [],
-	dropsColor: [],
+	dropsX : [],
+	dropsY : [],
+	dropsVX : [],
+	dropsVY : [],
+	dropsColor : [],
 
 	// DRAW FLAT OUTER BORDER
 	drawOuterBorder : function () {
@@ -24,13 +25,13 @@ var RAIN = {
 		PS.border( PS.ALL, PS.ALL, 0 );
 
 		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
-			PS.border( x, 0, { top: 1 } );
-			PS.border( x, RAIN.GRID_HEIGHT - 1, { bottom: 1 } );
+			PS.border( x, 0, { top : 1 } );
+			PS.border( x, RAIN.GRID_HEIGHT - 1, { bottom : 1 } );
 		}
 
 		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
-			PS.border( 0, y, { left: 1 } );
-			PS.border( RAIN.GRID_WIDTH - 1, y, { right: 1 } );
+			PS.border( 0, y, { left : 1 } );
+			PS.border( RAIN.GRID_WIDTH - 1, y, { right : 1 } );
 		}
 
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
@@ -56,26 +57,30 @@ var RAIN = {
 		PS.color( x, y, color );
 	},
 
-	// MOVE DROPS
+	// MOVE DROPS (WITH COLLISIONS)
 	tick : function () {
 		"use strict";
-		var i, len, x, y, vx, vy, color;
+		var i, j, len;
+		var x, y, vx, vy, color;
 
 		len = RAIN.dropsX.length;
-		i = 0;
 
-		while ( i < len ) {
+		for ( i = 0; i < len; i += 1 ) {
+
 			x = RAIN.dropsX[i];
 			y = RAIN.dropsY[i];
 			vx = RAIN.dropsVX[i];
 			vy = RAIN.dropsVY[i];
 			color = RAIN.dropsColor[i];
 
+			// erase old position
 			PS.color( x, y, RAIN.BG_COLOR );
 
+			// move
 			x += vx;
 			y += vy;
 
+			// wall bounce
 			if ( x < 0 ) {
 				x = 0;
 				vx = -vx;
@@ -98,13 +103,29 @@ var RAIN = {
 				PS.audioPlay( "fx_silencer" );
 			}
 
+			// drop-to-drop collision
+			for ( j = 0; j < len; j += 1 ) {
+				if ( j !== i &&
+					x === RAIN.dropsX[j] &&
+					y === RAIN.dropsY[j] ) {
+
+					vx = -vx;
+					vy = -vy;
+					RAIN.dropsVX[j] = -RAIN.dropsVX[j];
+					RAIN.dropsVY[j] = -RAIN.dropsVY[j];
+
+					PS.audioPlay( "fx_silencer" );
+				}
+			}
+
+			// save updated state
 			RAIN.dropsX[i] = x;
 			RAIN.dropsY[i] = y;
 			RAIN.dropsVX[i] = vx;
 			RAIN.dropsVY[i] = vy;
 
+			// draw new position
 			PS.color( x, y, color );
-			i += 1;
 		}
 	},
 
@@ -144,8 +165,9 @@ PS.init = function () {
 };
 
 // CLICK
-PS.touch = function( x, y ) {
+PS.touch = function ( x, y ) {
 	"use strict";
+	var vx, vy;
 
 	if ( RAIN.spreadOn ) {
 		RAIN.addDrop( x, y, -1, 1 );
@@ -153,8 +175,8 @@ PS.touch = function( x, y ) {
 		RAIN.addDrop( x, y,  1, 1 );
 	}
 	else {
-		var vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
-		var vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
+		vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 		RAIN.addDrop( x, y, vx, vy );
 	}
 
@@ -165,7 +187,7 @@ PS.touch = function( x, y ) {
 PS.keyDown = function ( key ) {
 	"use strict";
 
-	if ( key === 84 ) { // 'T'
+	if ( key === 84 ) { // T
 		RAIN.spreadOn = !RAIN.spreadOn;
 		PS.statusText( RAIN.spreadOn ? "Spread ON (T)" : "Spread OFF (T)" );
 	}
