@@ -36,7 +36,7 @@ var RAIN = {
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	},
 
-	// ADD DROP WITH SPECIFIED VELOCITY
+	// ADD DROP
 	addDrop : function ( x, y, vx, vy ) {
 		"use strict";
 		var color;
@@ -120,7 +120,7 @@ var RAIN = {
 
 		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
 		RAIN.drawOuterBorder();
-		PS.statusText( RAIN.spreadOn ? "Spread ON" : "Spread OFF" );
+		PS.statusText( RAIN.spreadOn ? "Spread ON (T)" : "Spread OFF (T)" );
 	}
 };
 
@@ -138,23 +138,21 @@ PS.init = function () {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Spread OFF" );
+	PS.statusText( "Spread OFF (press T)" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// CLICK TO FIRE
+// CLICK
 PS.touch = function( x, y ) {
 	"use strict";
 
 	if ( RAIN.spreadOn ) {
-		// 3-shot spread
 		RAIN.addDrop( x, y, -1, 1 );
 		RAIN.addDrop( x, y,  0, 1 );
 		RAIN.addDrop( x, y,  1, 1 );
 	}
 	else {
-		// Single random drop
 		var vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 		var vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 		RAIN.addDrop( x, y, vx, vy );
@@ -167,9 +165,9 @@ PS.touch = function( x, y ) {
 PS.keyDown = function ( key ) {
 	"use strict";
 
-	if ( key === PS.KEY_ALT ) {
+	if ( key === 84 ) { // 'T'
 		RAIN.spreadOn = !RAIN.spreadOn;
-		PS.statusText( RAIN.spreadOn ? "Spread ON" : "Spread OFF" );
+		PS.statusText( RAIN.spreadOn ? "Spread ON (T)" : "Spread OFF (T)" );
 	}
 	else if ( key === PS.KEY_SPACE ) {
 		RAIN.reset();
