@@ -6,6 +6,9 @@ var RAIN = {
 	FRAME_RATE: 6,
 	BG_COLOR: PS.COLOR_WHITE,
 
+	// INPUT STATE
+	altDown: false,
+
 	// VARIABLES
 	dropsX: [],
 	dropsY: [],
@@ -18,26 +21,15 @@ var RAIN = {
 		"use strict";
 		var x, y;
 
-		// Clear all borders
 		PS.border( PS.ALL, PS.ALL, 0 );
 
-		// Top edge (flat)
 		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
 			PS.border( x, 0, { top: 1 } );
-		}
-
-		// Bottom edge (flat)
-		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
 			PS.border( x, RAIN.GRID_HEIGHT - 1, { bottom: 1 } );
 		}
 
-		// Left edge (flat)
 		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
 			PS.border( 0, y, { left: 1 } );
-		}
-
-		// Right edge (flat)
-		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
 			PS.border( RAIN.GRID_WIDTH - 1, y, { right: 1 } );
 		}
 
@@ -136,7 +128,7 @@ var RAIN = {
 };
 
 // INIT
-PS.init = function( system, options ) {
+PS.init = function () {
 	"use strict";
 
 	PS.gridSize( RAIN.GRID_WIDTH, RAIN.GRID_HEIGHT );
@@ -149,18 +141,17 @@ PS.init = function( system, options ) {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Click: 1 drop | Alt + Click: 3 drops" );
+	PS.statusText( "Click: 1 drop | Hold ALT: 3 drops" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
 // CLICK HANDLER
-PS.touch = function( x, y, data, options ) {
+PS.touch = function( x, y ) {
 	"use strict";
 	var i, count;
 
-	// Alt key controls multi-fire
-	count = options.alt ? 3 : 1;
+	count = RAIN.altDown ? 3 : 1;
 
 	for ( i = 0; i < count; i += 1 ) {
 		RAIN.addDrop( x, y );
@@ -169,12 +160,24 @@ PS.touch = function( x, y, data, options ) {
 	PS.audioPlay( "fx_drip1" );
 };
 
-// SPACE = RESET
+// KEY DOWN
 PS.keyDown = function ( key ) {
 	"use strict";
 
-	if ( key === PS.KEY_SPACE ) {
+	if ( key === PS.KEY_ALT ) {
+		RAIN.altDown = true;
+	}
+	else if ( key === PS.KEY_SPACE ) {
 		RAIN.reset();
+	}
+};
+
+// KEY UP
+PS.keyUp = function ( key ) {
+	"use strict";
+
+	if ( key === PS.KEY_ALT ) {
+		RAIN.altDown = false;
 	}
 };
 
@@ -183,6 +186,5 @@ PS.release = function () { "use strict"; };
 PS.enter = function () { "use strict"; };
 PS.exit = function () { "use strict"; };
 PS.exitGrid = function () { "use strict"; };
-PS.keyUp = function () { "use strict"; };
 PS.swipe = function () { "use strict"; };
 PS.input = function () { "use strict"; };
