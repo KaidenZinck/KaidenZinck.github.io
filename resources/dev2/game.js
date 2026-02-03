@@ -6,8 +6,8 @@ var RAIN = {
 	FRAME_RATE: 6,
 	BG_COLOR: PS.COLOR_WHITE,
 
-	// INPUT STATE
-	altDown: false,
+	// MODE STATE
+	spreadOn: false,
 
 	// VARIABLES
 	dropsX: [],
@@ -36,7 +36,7 @@ var RAIN = {
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	},
 
-	// ADD DROP WITH SPECIFIC VELOCITY
+	// ADD DROP WITH SPECIFIED VELOCITY
 	addDrop : function ( x, y, vx, vy ) {
 		"use strict";
 		var color;
@@ -120,7 +120,7 @@ var RAIN = {
 
 		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
 		RAIN.drawOuterBorder();
-		PS.statusText( "Reset" );
+		PS.statusText( RAIN.spreadOn ? "Spread ON" : "Spread OFF" );
 	}
 };
 
@@ -138,17 +138,17 @@ PS.init = function () {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Click: 1 | Hold ALT: 3-shot spread" );
+	PS.statusText( "Spread OFF" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// CLICK
+// CLICK TO FIRE
 PS.touch = function( x, y ) {
 	"use strict";
 
-	if ( RAIN.altDown ) {
-		// Spread pattern
+	if ( RAIN.spreadOn ) {
+		// 3-shot spread
 		RAIN.addDrop( x, y, -1, 1 );
 		RAIN.addDrop( x, y,  0, 1 );
 		RAIN.addDrop( x, y,  1, 1 );
@@ -168,19 +168,11 @@ PS.keyDown = function ( key ) {
 	"use strict";
 
 	if ( key === PS.KEY_ALT ) {
-		RAIN.altDown = true;
+		RAIN.spreadOn = !RAIN.spreadOn;
+		PS.statusText( RAIN.spreadOn ? "Spread ON" : "Spread OFF" );
 	}
 	else if ( key === PS.KEY_SPACE ) {
 		RAIN.reset();
-	}
-};
-
-// KEY UP
-PS.keyUp = function ( key ) {
-	"use strict";
-
-	if ( key === PS.KEY_ALT ) {
-		RAIN.altDown = false;
 	}
 };
 
@@ -189,5 +181,6 @@ PS.release = function () { "use strict"; };
 PS.enter = function () { "use strict"; };
 PS.exit = function () { "use strict"; };
 PS.exitGrid = function () { "use strict"; };
+PS.keyUp = function () { "use strict"; };
 PS.swipe = function () { "use strict"; };
 PS.input = function () { "use strict"; };
