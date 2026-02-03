@@ -1,9 +1,3 @@
-// Simple Rain Toy – Endless Random Drops
-// Drops move in all directions, never disappear, random colors
-
-/*jslint nomen: true, white: true */
-/*global PS */
-
 var RAIN = {
 
 	// CONSTANTS
@@ -19,7 +13,7 @@ var RAIN = {
 	dropsVY: [],
 	dropsColor: [],
 
-	// FUNCTIONS
+	// MOVE DROPS
 	tick : function () {
 		"use strict";
 		var i, len, x, y, vx, vy, color;
@@ -75,6 +69,23 @@ var RAIN = {
 
 			i += 1;
 		}
+	},
+
+	// RESET EVERYTHING
+	reset : function () {
+		"use strict";
+
+		RAIN.dropsX.length = 0;
+		RAIN.dropsY.length = 0;
+		RAIN.dropsVX.length = 0;
+		RAIN.dropsVY.length = 0;
+		RAIN.dropsColor.length = 0;
+
+		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+		PS.border( PS.ALL, PS.ALL, 1 );
+		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
+
+		PS.statusText( "Reset" );
 	}
 };
 
@@ -97,32 +108,14 @@ PS.init = function( system, options ) {
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-reset : function () {
-	"use strict";
-
-	// clear all drop data
-	RAIN.dropsX.length = 0;
-	RAIN.dropsY.length = 0;
-	RAIN.dropsVX.length = 0;
-	RAIN.dropsVY.length = 0;
-	RAIN.dropsColor.length = 0;
-
-	// clear grid
-	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
-
-	PS.statusText( "Reset" );
-}
-
 // TOUCH – create a new random-colored drop
 PS.touch = function( x, y, data, options ) {
 	"use strict";
 	var vx, vy, color;
 
-	// random direction
 	vx = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 	vy = ( PS.random( 2 ) === 1 ) ? -1 : 1;
 
-	// random color
 	color = PS.makeRGB(
 		PS.random( 255 ),
 		PS.random( 255 ),
@@ -139,11 +132,7 @@ PS.touch = function( x, y, data, options ) {
 	PS.audioPlay( "fx_drip1" );
 };
 
-// REQUIRED BUT UNUSED EVENTS
-PS.release = function () { "use strict"; };
-PS.enter = function () { "use strict"; };
-PS.exit = function () { "use strict"; };
-PS.exitGrid = function () { "use strict"; };
+// SPACE KEY RESET
 PS.keyDown = function ( key, shift, ctrl, options ) {
 	"use strict";
 
@@ -151,6 +140,12 @@ PS.keyDown = function ( key, shift, ctrl, options ) {
 		RAIN.reset();
 	}
 };
+
+// REQUIRED BUT UNUSED EVENTS
+PS.release = function () { "use strict"; };
+PS.enter = function () { "use strict"; };
+PS.exit = function () { "use strict"; };
+PS.exitGrid = function () { "use strict"; };
 PS.keyUp = function () { "use strict"; };
 PS.swipe = function () { "use strict"; };
 PS.input = function () { "use strict"; };
