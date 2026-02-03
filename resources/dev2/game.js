@@ -13,27 +13,38 @@ var RAIN = {
 	dropsVY: [],
 	dropsColor: [],
 
-	// DRAW ONLY OUTER BORDER
+	// DRAW FLAT OUTER BORDER
 	drawOuterBorder : function () {
 		"use strict";
 		var x, y;
 
+		// Clear all borders
 		PS.border( PS.ALL, PS.ALL, 0 );
 
+		// Top edge (flat)
 		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
-			PS.border( x, 0, 1 );
-			PS.border( x, RAIN.GRID_HEIGHT - 1, 1 );
+			PS.border( x, 0, { top: 1 } );
 		}
 
+		// Bottom edge (flat)
+		for ( x = 0; x < RAIN.GRID_WIDTH; x += 1 ) {
+			PS.border( x, RAIN.GRID_HEIGHT - 1, { bottom: 1 } );
+		}
+
+		// Left edge (flat)
 		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
-			PS.border( 0, y, 1 );
-			PS.border( RAIN.GRID_WIDTH - 1, y, 1 );
+			PS.border( 0, y, { left: 1 } );
+		}
+
+		// Right edge (flat)
+		for ( y = 0; y < RAIN.GRID_HEIGHT; y += 1 ) {
+			PS.border( RAIN.GRID_WIDTH - 1, y, { right: 1 } );
 		}
 
 		PS.borderColor( PS.ALL, PS.ALL, PS.COLOR_BLACK );
 	},
 
-	// ADD A SINGLE DROP
+	// ADD ONE DROP
 	addDrop : function ( x, y ) {
 		"use strict";
 		var vx, vy, color;
@@ -138,18 +149,18 @@ PS.init = function( system, options ) {
 	PS.audioLoad( "fx_silencer", { lock : true } );
 
 	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Left click: 1 drop | Right click: 3 drops" );
+	PS.statusText( "Click: 1 drop | Alt + Click: 3 drops" );
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
 
-// MOUSE CLICK
+// CLICK HANDLER
 PS.touch = function( x, y, data, options ) {
 	"use strict";
 	var i, count;
 
-	// Right mouse button = 3 drops
-	count = ( options.button === PS.RIGHT ) ? 3 : 1;
+	// Alt key controls multi-fire
+	count = options.alt ? 3 : 1;
 
 	for ( i = 0; i < count; i += 1 ) {
 		RAIN.addDrop( x, y );
@@ -158,8 +169,8 @@ PS.touch = function( x, y, data, options ) {
 	PS.audioPlay( "fx_drip1" );
 };
 
-// SPACE KEY = RESET
-PS.keyDown = function ( key, shift, ctrl, options ) {
+// SPACE = RESET
+PS.keyDown = function ( key ) {
 	"use strict";
 
 	if ( key === PS.KEY_SPACE ) {
