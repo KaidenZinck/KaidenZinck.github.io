@@ -169,7 +169,7 @@ PS.touch = function( x, y, data, options ) {
 PS.keyDown = function( key ) {
 	"use strict";
 
-	if ( key === PS.KEY_R ) {
+	if ( key === PS.KEY_SPACE ) {
 		RAIN.reset();
 	}
 };
