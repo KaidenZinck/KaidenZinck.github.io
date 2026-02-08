@@ -115,7 +115,7 @@ var RAIN = {
 		// check win
 		if ( RAIN.inHole( x, y ) ) {
 			RAIN.won = true;
-			PS.statusText( "You win! Press R to play again" );
+			PS.statusText( "You win! Press SPACE to play again" );
 			PS.audioPlay( "fx_tada" );
 			return;
 		}
