@@ -1,4 +1,4 @@
-// Rain Puzzle – Bounce Drop Into Hole
+// Rain Puzzle – Bounce Drop Into Big Hole + Reset
 
 /*jslint nomen: true, white: true */
 /*global PS */
@@ -9,11 +9,12 @@ var RAIN = {
 	GRID_WIDTH: 24,
 	GRID_HEIGHT: 24,
 	FRAME_RATE: 6,
-	BG_COLOR: PS.COLOR_WHITE,
+	BG_COLOR: PS.COLOR_GREEN,
 
-	// HOLE LOCATION
-	holeX: 20,
-	holeY: 20,
+	// BIG HOLE AREA (3x3)
+	holeX: 19,
+	holeY: 19,
+	holeSize: 3,
 	holeColor: PS.COLOR_BLACK,
 
 	// SINGLE DROP STATE
@@ -22,10 +23,47 @@ var RAIN = {
 	dropY: 0,
 	dropVX: 1,
 	dropVY: 1,
-	dropColor: PS.COLOR_BLUE,
+	dropColor: PS.COLOR_WHITE,
 
 	// GAME STATE
 	won: false,
+
+	// DRAW HOLE
+	drawHole : function () {
+		"use strict";
+		var x, y;
+
+		for ( x = 0; x < RAIN.holeSize; x += 1 ) {
+			for ( y = 0; y < RAIN.holeSize; y += 1 ) {
+				PS.color( RAIN.holeX + x, RAIN.holeY + y, RAIN.holeColor );
+			}
+		}
+	},
+
+	// CHECK IF DROP IN HOLE
+	inHole : function ( x, y ) {
+		"use strict";
+
+		return (
+			x >= RAIN.holeX &&
+			x < RAIN.holeX + RAIN.holeSize &&
+			y >= RAIN.holeY &&
+			y < RAIN.holeY + RAIN.holeSize
+		);
+	},
+
+	// RESET LEVEL
+	reset : function () {
+		"use strict";
+
+		RAIN.dropActive = false;
+		RAIN.won = false;
+
+		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+		RAIN.drawHole();
+
+		PS.statusText( "Tap to launch | Press R to reset" );
+	},
 
 	// GAME LOOP
 	tick : function () {
@@ -68,16 +106,16 @@ var RAIN = {
 			vy = -vy;
 		}
 
-		// store back
+		// store
 		RAIN.dropX = x;
 		RAIN.dropY = y;
 		RAIN.dropVX = vx;
 		RAIN.dropVY = vy;
 
-		// check hole
-		if ( x === RAIN.holeX && y === RAIN.holeY ) {
+		// check win
+		if ( RAIN.inHole( x, y ) ) {
 			RAIN.won = true;
-			PS.statusText( "Nice shot! You win!" );
+			PS.statusText( "You win! Press R to play again" );
 			PS.audioPlay( "fx_tada" );
 			return;
 		}
@@ -99,11 +137,10 @@ PS.init = function( system, options ) {
 	PS.audioLoad( "fx_drip1", { lock : true } );
 	PS.audioLoad( "fx_tada", { lock : true } );
 
-	PS.statusColor( PS.COLOR_BLACK );
-	PS.statusText( "Tap once to launch the drop toward the hole" );
+	PS.statusColor( PS.COLOR_WHITE );
+	PS.statusText( "Tap to launch | Press R to reset" );
 
-	// draw hole
-	PS.color( RAIN.holeX, RAIN.holeY, RAIN.holeColor );
+	RAIN.drawHole();
 
 	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
 };
@@ -120,7 +157,7 @@ PS.touch = function( x, y, data, options ) {
 	RAIN.dropX = x;
 	RAIN.dropY = y;
 
-	// FIXED PUZZLE ANGLE (change this to make harder/easier)
+	// Launch angle
 	RAIN.dropVX = 1;
 	RAIN.dropVY = 1;
 
@@ -128,12 +165,20 @@ PS.touch = function( x, y, data, options ) {
 	PS.audioPlay( "fx_drip1" );
 };
 
-// REQUIRED EMPTY EVENTS
+// RESET BUTTON (R key)
+PS.keyDown = function( key ) {
+	"use strict";
+
+	if ( key === PS.KEY_R ) {
+		RAIN.reset();
+	}
+};
+
+// UNUSED EVENTS
 PS.release = function () { "use strict"; };
 PS.enter = function () { "use strict"; };
 PS.exit = function () { "use strict"; };
 PS.exitGrid = function () { "use strict"; };
-PS.keyDown = function () { "use strict"; };
 PS.keyUp = function () { "use strict"; };
 PS.swipe = function () { "use strict"; };
 PS.input = function () { "use strict"; };
