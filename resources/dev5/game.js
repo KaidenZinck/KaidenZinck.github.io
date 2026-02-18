@@ -251,24 +251,22 @@ PS.init = function(){
 
 PS.touch = function(x,y){
 
-	var cx, cy, dx, dy, len;
+	var dx, dy, len;
 
 	if (RAIN.ballActive || RAIN.won) return;
 
 	RAIN.ballActive = true;
 
-	// Shoot from center toward tap (constant power)
-	cx = 12;
-	cy = 12;
+	// Spawn exactly where player tapped
+	RAIN.ballX = x;
+	RAIN.ballY = y;
 
-	dx = x - cx;
-	dy = y - cy;
+	// Shoot toward hole (constant speed, NOT distance based)
+	dx = RAIN.holeX - x;
+	dy = RAIN.holeY - y;
 
 	len = Math.sqrt(dx*dx + dy*dy);
-	if ( len === 0 ) len = 1;
-
-	RAIN.ballX = cx;
-	RAIN.ballY = cy;
+	if (len === 0) len = 1;
 
 	RAIN.ballVX = (dx/len) * RAIN.shotPower;
 	RAIN.ballVY = (dy/len) * RAIN.shotPower;
