@@ -5,44 +5,24 @@
 
 var RAIN = {
 
-	//-----------------------------------------
-	// GRID
-	//-----------------------------------------
-
 	GRID_WIDTH: 24,
 	GRID_HEIGHT: 24,
 	FRAME_RATE: 6,
-
-	//-----------------------------------------
-	// COLORS
-	//-----------------------------------------
 
 	BG_COLOR: PS.COLOR_GREEN,
 	WALL_COLOR: PS.COLOR_GRAY,
 	HOLE_COLOR: PS.COLOR_BLACK,
 	BALL_COLOR: PS.COLOR_WHITE,
 
-	//-----------------------------------------
-	// PHYSICS
-	//-----------------------------------------
-
 	friction: 0.985,
 	shotVX: 1.2,
 	shotVY: 1.2,
-
-	//-----------------------------------------
-	// BALL
-	//-----------------------------------------
 
 	ballActive: false,
 	ballX: 0,
 	ballY: 0,
 	ballVX: 0,
 	ballVY: 0,
-
-	//-----------------------------------------
-	// LEVEL
-	//-----------------------------------------
 
 	level: 0,
 	walls: [],
@@ -51,7 +31,7 @@ var RAIN = {
 	holeSize: 2,
 	holeBuffer: 3,
 
-	transitioning: false, // ⭐ NEW FIX
+	transitioning: false,
 
 	//-----------------------------------------
 	// WALL HELPERS
@@ -119,7 +99,7 @@ var RAIN = {
 	},
 
 	//-----------------------------------------
-	// LEVEL DATA
+	// LEVEL LOADING
 	//-----------------------------------------
 
 	loadLevel : function () {
@@ -127,9 +107,10 @@ var RAIN = {
 		var i;
 
 		RAIN.walls = [];
-		RAIN.transitioning = false; // ⭐ reset transition lock
+		RAIN.transitioning = false;
 		PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
+		// Outer border
 		for (i=0;i<RAIN.GRID_WIDTH;i++) {
 			RAIN.addWall(i,0);
 			RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
@@ -139,6 +120,7 @@ var RAIN = {
 			RAIN.addWall(RAIN.GRID_WIDTH-1,i);
 		}
 
+		// LEVEL 1
 		if (RAIN.level === 0) {
 
 			RAIN.addWallRect(4,6,14,1);
@@ -148,6 +130,8 @@ var RAIN = {
 			RAIN.holeX = 14;
 			RAIN.holeY = 16;
 		}
+
+		// LEVEL 2
 		else {
 
 			RAIN.addWallRect(3,4,18,1);
@@ -164,20 +148,17 @@ var RAIN = {
 
 		RAIN.drawWalls();
 		RAIN.drawHole();
+
 		PS.statusText("Level " + (RAIN.level+1) + " – Tap to shoot");
 	},
 
 	//-----------------------------------------
-	// RESET
+	// LEVEL ADVANCE
 	//-----------------------------------------
-
-	resetBall : function () {
-		RAIN.ballActive = false;
-	},
 
 	nextLevel : function () {
 		RAIN.level = (RAIN.level + 1) % 2;
-		RAIN.resetBall();
+		RAIN.ballActive = false;
 		RAIN.loadLevel();
 	},
 
@@ -200,7 +181,7 @@ var RAIN = {
 		var x,y,vx,vy,steps,stepX,stepY,i;
 
 		if (!RAIN.ballActive) return;
-		if (RAIN.transitioning) return; // ⭐ prevent repeat triggers
+		if (RAIN.transitioning) return;
 
 		x = RAIN.ballX;
 		y = RAIN.ballY;
@@ -243,16 +224,15 @@ var RAIN = {
 		RAIN.ballVX = vx;
 		RAIN.ballVY = vy;
 
+		// ⭐ SINGLE TRANSITION ONLY
 		if (RAIN.inHole(RAIN.ballX,RAIN.ballY)) {
 
-			RAIN.transitioning = true; // ⭐ lock transition
+			RAIN.transitioning = true;
 			RAIN.ballActive = false;
 
 			PS.audioPlay("fx_tada");
 
-			PS.timerStart(30, function () {
-				RAIN.nextLevel();
-			});
+			RAIN.nextLevel(); // ← ONLY ONCE
 
 			return;
 		}
