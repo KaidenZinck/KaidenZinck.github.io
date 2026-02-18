@@ -1,4 +1,4 @@
-// MiniGolf – Fixed Diagonal Shot + Level Progression + Safe Hole Zone
+// MiniGolf – 3 Levels + Win Screen + Space Reset
 
 /*jslint nomen: true, white: true */
 /*global PS */
@@ -25,6 +25,9 @@ var RAIN = {
 	ballVY: 0,
 
 	level: 0,
+	maxLevel: 3,
+	gameWon: false,
+
 	walls: [],
 	holeX: 0,
 	holeY: 0,
@@ -108,6 +111,8 @@ var RAIN = {
 
 		RAIN.walls = [];
 		RAIN.transitioning = false;
+		RAIN.ballActive = false;
+
 		PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
 		// Outer border
@@ -120,7 +125,9 @@ var RAIN = {
 			RAIN.addWall(RAIN.GRID_WIDTH-1,i);
 		}
 
+		//---------------------------------
 		// LEVEL 1
+		//---------------------------------
 		if (RAIN.level === 0) {
 
 			RAIN.addWallRect(4,6,14,1);
@@ -131,8 +138,10 @@ var RAIN = {
 			RAIN.holeY = 16;
 		}
 
+		//---------------------------------
 		// LEVEL 2
-		else {
+		//---------------------------------
+		else if (RAIN.level === 1) {
 
 			RAIN.addWallRect(3,4,18,1);
 			RAIN.addWallRect(3,4,1,16);
@@ -146,10 +155,42 @@ var RAIN = {
 			RAIN.holeY = 6;
 		}
 
+		//---------------------------------
+		// LEVEL 3 (NEW HARD LEVEL)
+		//---------------------------------
+		else if (RAIN.level === 2) {
+
+			RAIN.addWallRect(2,3,20,1);
+			RAIN.addWallRect(2,3,1,18);
+			RAIN.addWallRect(2,20,20,1);
+			RAIN.addWallRect(21,3,1,18);
+
+			RAIN.addWallRect(6,6,12,1);
+			RAIN.addWallRect(6,6,1,10);
+			RAIN.addWallRect(10,10,10,1);
+			RAIN.addWallRect(15,10,1,8);
+
+			RAIN.holeX = 19;
+			RAIN.holeY = 18;
+		}
+
 		RAIN.drawWalls();
 		RAIN.drawHole();
 
-		PS.statusText("Level " + (RAIN.level+1) + " – Tap to shoot");
+		PS.statusText("Level " + (RAIN.level+1) + " – Tap to shoot | SPACE = Reset");
+	},
+
+	//-----------------------------------------
+	// WIN SCREEN
+	//-----------------------------------------
+
+	showWinScreen : function () {
+
+		RAIN.gameWon = true;
+		RAIN.ballActive = false;
+
+		PS.color(PS.ALL,PS.ALL,PS.COLOR_BLACK);
+		PS.statusText("YOU WIN! Press SPACE to restart");
 	},
 
 	//-----------------------------------------
@@ -157,8 +198,14 @@ var RAIN = {
 	//-----------------------------------------
 
 	nextLevel : function () {
-		RAIN.level = (RAIN.level + 1) % 2;
-		RAIN.ballActive = false;
+
+		RAIN.level += 1;
+
+		if (RAIN.level >= RAIN.maxLevel) {
+			RAIN.showWinScreen();
+			return;
+		}
+
 		RAIN.loadLevel();
 	},
 
@@ -180,6 +227,7 @@ var RAIN = {
 
 		var x,y,vx,vy,steps,stepX,stepY,i;
 
+		if (RAIN.gameWon) return;
 		if (!RAIN.ballActive) return;
 		if (RAIN.transitioning) return;
 
@@ -224,7 +272,6 @@ var RAIN = {
 		RAIN.ballVX = vx;
 		RAIN.ballVY = vy;
 
-		// ⭐ SINGLE TRANSITION ONLY
 		if (RAIN.inHole(RAIN.ballX,RAIN.ballY)) {
 
 			RAIN.transitioning = true;
@@ -232,8 +279,7 @@ var RAIN = {
 
 			PS.audioPlay("fx_tada");
 
-			RAIN.nextLevel(); // ← ONLY ONCE
-
+			RAIN.nextLevel();
 			return;
 		}
 
@@ -254,7 +300,10 @@ PS.init = function () {
 	PS.audioLoad("fx_drip1",{lock:true});
 	PS.audioLoad("fx_tada",{lock:true});
 
+	RAIN.level = 0;
+	RAIN.gameWon = false;
 	RAIN.loadLevel();
+
 	PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
 };
 
@@ -264,6 +313,7 @@ PS.init = function () {
 
 PS.touch = function (x,y) {
 
+	if (RAIN.gameWon) return;
 	if (RAIN.ballActive) return;
 	if (RAIN.isWall(x,y)) return;
 	if (RAIN.inHoleBuffer(x,y)) return;
@@ -276,4 +326,23 @@ PS.touch = function (x,y) {
 	RAIN.ballVY = RAIN.shotVY;
 
 	PS.audioPlay("fx_drip1");
+};
+
+//-----------------------------------------
+// SPACE RESET
+//-----------------------------------------
+
+PS.keyDown = function (key) {
+
+	if (key === PS.KEY_SPACE) {
+
+		if (RAIN.gameWon) {
+			RAIN.level = 0;
+			RAIN.gameWon = false;
+			RAIN.loadLevel();
+		}
+		else {
+			RAIN.loadLevel();
+		}
+	}
 };
