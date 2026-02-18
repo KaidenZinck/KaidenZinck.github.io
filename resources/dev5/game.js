@@ -1,220 +1,299 @@
+// MiniGolf – Fixed Diagonal Shot + Level Progression + Safe Hole Zone
+
 /*jslint nomen: true, white: true */
 /*global PS */
 
-var GAME = {
+var RAIN = {
 
-    GRID_W: 32,
-    GRID_H: 32,
+	//-----------------------------------------
+	// GRID
+	//-----------------------------------------
 
-    BG_COLOR: PS.COLOR_GREEN,
-    WALL_COLOR: 0x808080,
-    BALL_COLOR: PS.COLOR_WHITE,
-    HOLE_COLOR: PS.COLOR_BLACK,
+	GRID_WIDTH: 24,
+	GRID_HEIGHT: 24,
+	FRAME_RATE: 6,
 
-    stage: 1,
+	//-----------------------------------------
+	// COLORS
+	//-----------------------------------------
 
-    ballX: 0,
-    ballY: 0,
-    vx: 0,
-    vy: 0,
-    moving: false,
+	BG_COLOR: PS.COLOR_GREEN,
+	WALL_COLOR: PS.COLOR_GRAY,
+	HOLE_COLOR: PS.COLOR_BLACK,
+	BALL_COLOR: PS.COLOR_WHITE,
 
-    holeX: 0,
-    holeY: 0,
+	//-----------------------------------------
+	// PHYSICS
+	//-----------------------------------------
 
-    safeRadius: 3,
+	friction: 0.985,
+	shotVX: 1.2,
+	shotVY: 1.2,
 
-    shotStartTime: 0,
+	//-----------------------------------------
+	// BALL
+	//-----------------------------------------
 
-    levelComplete: false,
+	ballActive: false,
+	ballX: 0,
+	ballY: 0,
+	ballVX: 0,
+	ballVY: 0,
 
-    // ---------- LEVELS ----------
-    levels: [
+	//-----------------------------------------
+	// LEVEL
+	//-----------------------------------------
 
-        // Stage 1
-        {
-            walls: function () {
+	level: 0,
+	walls: [],
+	holeX: 0,
+	holeY: 0,
+	holeSize: 2,
+	holeBuffer: 3,
 
-                // Outer box
-                for (var x = 4; x <= 27; x++) {
-                    PS.color(x, 4, GAME.WALL_COLOR);
-                    PS.color(x, 27, GAME.WALL_COLOR);
-                }
+	transitioning: false, // ⭐ NEW FIX
 
-                for (var y = 4; y <= 27; y++) {
-                    PS.color(4, y, GAME.WALL_COLOR);
-                    PS.color(27, y, GAME.WALL_COLOR);
-                }
+	//-----------------------------------------
+	// WALL HELPERS
+	//-----------------------------------------
 
-                // Inner L
-                for (x = 10; x <= 20; x++) {
-                    PS.color(x, 12, GAME.WALL_COLOR);
-                }
+	addWall : function (x,y) {
+		RAIN.walls.push({x:x,y:y});
+	},
 
-                for (y = 12; y <= 22; y++) {
-                    PS.color(10, y, GAME.WALL_COLOR);
-                }
-            },
+	addWallRect : function (x,y,w,h) {
+		var i,j;
+		for (i=0;i<w;i++) {
+			for (j=0;j<h;j++) {
+				RAIN.addWall(x+i,y+j);
+			}
+		}
+	},
 
-            hole: { x: 22, y: 22 }
-        },
+	isWall : function (x,y) {
+		var i,w;
+		for (i=0;i<RAIN.walls.length;i++) {
+			w = RAIN.walls[i];
+			if (w.x === x && w.y === y) return true;
+		}
+		return false;
+	},
 
-        // Stage 2 (simple variation)
-        {
-            walls: function () {
+	drawWalls : function () {
+		var i,w;
+		for (i=0;i<RAIN.walls.length;i++) {
+			w = RAIN.walls[i];
+			PS.color(w.x,w.y,RAIN.WALL_COLOR);
+		}
+	},
 
-                for (var x = 3; x <= 28; x++) {
-                    PS.color(x, 3, GAME.WALL_COLOR);
-                    PS.color(x, 28, GAME.WALL_COLOR);
-                }
+	//-----------------------------------------
+	// HOLE
+	//-----------------------------------------
 
-                for (var y = 3; y <= 28; y++) {
-                    PS.color(3, y, GAME.WALL_COLOR);
-                    PS.color(28, y, GAME.WALL_COLOR);
-                }
+	drawHole : function () {
+		var x,y;
+		for (x=0;x<RAIN.holeSize;x++) {
+			for (y=0;y<RAIN.holeSize;y++) {
+				PS.color(RAIN.holeX+x,RAIN.holeY+y,RAIN.HOLE_COLOR);
+			}
+		}
+	},
 
-                for (x = 8; x <= 24; x++) {
-                    PS.color(x, 16, GAME.WALL_COLOR);
-                }
-            },
+	inHole : function (x,y) {
+		return (
+			x >= RAIN.holeX &&
+			x < RAIN.holeX + RAIN.holeSize &&
+			y >= RAIN.holeY &&
+			y < RAIN.holeY + RAIN.holeSize
+		);
+	},
 
-            hole: { x: 25, y: 25 }
-        }
-    ],
+	inHoleBuffer : function (x,y) {
+		return (
+			x >= RAIN.holeX - RAIN.holeBuffer &&
+			x <= RAIN.holeX + RAIN.holeSize + RAIN.holeBuffer &&
+			y >= RAIN.holeY - RAIN.holeBuffer &&
+			y <= RAIN.holeY + RAIN.holeSize + RAIN.holeBuffer
+		);
+	},
 
-    // ---------- RESET LEVEL ----------
-    loadStage: function () {
+	//-----------------------------------------
+	// LEVEL DATA
+	//-----------------------------------------
 
-        PS.color(PS.ALL, PS.ALL, GAME.BG_COLOR);
+	loadLevel : function () {
 
-        GAME.moving = false;
-        GAME.levelComplete = false;
+		var i;
 
-        var lvl = GAME.levels[GAME.stage - 1];
+		RAIN.walls = [];
+		RAIN.transitioning = false; // ⭐ reset transition lock
+		PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
-        lvl.walls();
+		for (i=0;i<RAIN.GRID_WIDTH;i++) {
+			RAIN.addWall(i,0);
+			RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
+		}
+		for (i=0;i<RAIN.GRID_HEIGHT;i++) {
+			RAIN.addWall(0,i);
+			RAIN.addWall(RAIN.GRID_WIDTH-1,i);
+		}
 
-        GAME.holeX = lvl.hole.x;
-        GAME.holeY = lvl.hole.y;
+		if (RAIN.level === 0) {
 
-        PS.color(GAME.holeX, GAME.holeY, GAME.HOLE_COLOR);
+			RAIN.addWallRect(4,6,14,1);
+			RAIN.addWallRect(4,6,1,13);
+			RAIN.addWallRect(9,12,8,1);
 
-        PS.statusText("Stage " + GAME.stage);
-    },
+			RAIN.holeX = 14;
+			RAIN.holeY = 16;
+		}
+		else {
 
-    // ---------- SAFE BALL SPAWN ----------
-    spawnBall: function () {
+			RAIN.addWallRect(3,4,18,1);
+			RAIN.addWallRect(3,4,1,16);
+			RAIN.addWallRect(3,19,18,1);
+			RAIN.addWallRect(20,4,1,16);
 
-        var x, y, safe;
+			RAIN.addWallRect(8,10,8,1);
+			RAIN.addWallRect(12,10,1,6);
 
-        do {
-            x = PS.random(GAME.GRID_W - 2) + 1;
-            y = PS.random(GAME.GRID_H - 2) + 1;
+			RAIN.holeX = 17;
+			RAIN.holeY = 6;
+		}
 
-            safe = true;
+		RAIN.drawWalls();
+		RAIN.drawHole();
+		PS.statusText("Level " + (RAIN.level+1) + " – Tap to shoot");
+	},
 
-            if (PS.color(x, y) === GAME.WALL_COLOR) safe = false;
+	//-----------------------------------------
+	// RESET
+	//-----------------------------------------
 
-            if (Math.abs(x - GAME.holeX) <= GAME.safeRadius &&
-                Math.abs(y - GAME.holeY) <= GAME.safeRadius) safe = false;
+	resetBall : function () {
+		RAIN.ballActive = false;
+	},
 
-        } while (!safe);
+	nextLevel : function () {
+		RAIN.level = (RAIN.level + 1) % 2;
+		RAIN.resetBall();
+		RAIN.loadLevel();
+	},
 
-        GAME.ballX = x;
-        GAME.ballY = y;
+	//-----------------------------------------
+	// SAFE ERASE
+	//-----------------------------------------
 
-        PS.color(x, y, GAME.BALL_COLOR);
-    },
+	eraseBall : function (x,y) {
+		if (!RAIN.isWall(x,y) && !RAIN.inHole(x,y)) {
+			PS.color(x,y,RAIN.BG_COLOR);
+		}
+	},
 
-    // ---------- SHOOT ----------
-    shoot: function () {
+	//-----------------------------------------
+	// GAME LOOP
+	//-----------------------------------------
 
-        if (GAME.moving) return;
+	tick : function () {
 
-        GAME.vx = 0.7;
-        GAME.vy = 0.7;
+		var x,y,vx,vy,steps,stepX,stepY,i;
 
-        GAME.moving = true;
-        GAME.shotStartTime = Date.now();
-    },
+		if (!RAIN.ballActive) return;
+		if (RAIN.transitioning) return; // ⭐ prevent repeat triggers
 
-    // ---------- MOVE ----------
-    update: function () {
+		x = RAIN.ballX;
+		y = RAIN.ballY;
+		vx = RAIN.ballVX;
+		vy = RAIN.ballVY;
 
-        if (!GAME.moving) return;
+		RAIN.eraseBall(x,y);
 
-        var timeAlive = (Date.now() - GAME.shotStartTime) / 1000;
+		vx *= RAIN.friction;
+		vy *= RAIN.friction;
 
-        // Slight decay
-        var speedScale = Math.max(0.2, 1 - timeAlive * 0.1);
+		if (Math.abs(vx) < 0.02 && Math.abs(vy) < 0.02) {
+			RAIN.ballActive = false;
+			return;
+		}
 
-        var nextX = GAME.ballX + GAME.vx * speedScale;
-        var nextY = GAME.ballY + GAME.vy * speedScale;
+		steps = Math.ceil(Math.max(Math.abs(vx),Math.abs(vy)));
+		stepX = vx / steps;
+		stepY = vy / steps;
 
-        var gx = Math.round(nextX);
-        var gy = Math.round(nextY);
+		for (i=0;i<steps;i++) {
 
-        // WALL COLLISION
-        if (PS.color(gx, Math.round(GAME.ballY)) === GAME.WALL_COLOR) {
-            GAME.vx *= -1;
-            nextX = GAME.ballX;
-        }
+			if (!RAIN.isWall(Math.round(x+stepX),Math.round(y))) {
+				x += stepX;
+			} else {
+				vx = -vx;
+				break;
+			}
 
-        if (PS.color(Math.round(GAME.ballX), gy) === GAME.WALL_COLOR) {
-            GAME.vy *= -1;
-            nextY = GAME.ballY;
-        }
+			if (!RAIN.isWall(Math.round(x),Math.round(y+stepY))) {
+				y += stepY;
+			} else {
+				vy = -vy;
+				break;
+			}
+		}
 
-        // Apply movement
-        PS.color(Math.round(GAME.ballX), Math.round(GAME.ballY), GAME.BG_COLOR);
+		RAIN.ballX = Math.round(x);
+		RAIN.ballY = Math.round(y);
+		RAIN.ballVX = vx;
+		RAIN.ballVY = vy;
 
-        GAME.ballX = nextX;
-        GAME.ballY = nextY;
+		if (RAIN.inHole(RAIN.ballX,RAIN.ballY)) {
 
-        PS.color(Math.round(GAME.ballX), Math.round(GAME.ballY), GAME.BALL_COLOR);
+			RAIN.transitioning = true; // ⭐ lock transition
+			RAIN.ballActive = false;
 
-        // HOLE CHECK
-        if (!GAME.levelComplete &&
-            Math.round(GAME.ballX) === GAME.holeX &&
-            Math.round(GAME.ballY) === GAME.holeY) {
+			PS.audioPlay("fx_tada");
 
-            GAME.levelComplete = true;
-            GAME.moving = false;
+			PS.timerStart(30, function () {
+				RAIN.nextLevel();
+			});
 
-            PS.statusText("Stage Clear!");
+			return;
+		}
 
-            PS.timerStart(60, function () {
-
-                GAME.stage++;
-
-                if (GAME.stage > GAME.levels.length) {
-                    GAME.stage = 1;
-                }
-
-                GAME.loadStage();
-                GAME.spawnBall();
-
-            });
-        }
-    }
+		PS.color(RAIN.ballX,RAIN.ballY,RAIN.BALL_COLOR);
+	}
 };
 
-// ---------- INIT ----------
+//-----------------------------------------
+// INIT
+//-----------------------------------------
+
 PS.init = function () {
 
-    PS.gridSize(GAME.GRID_W, GAME.GRID_H);
+	PS.gridSize(RAIN.GRID_WIDTH,RAIN.GRID_HEIGHT);
+	PS.gridColor(RAIN.BG_COLOR);
+	PS.border(PS.ALL,PS.ALL,0);
 
-    PS.gridColor(GAME.BG_COLOR);
-    PS.border(PS.ALL, PS.ALL, 0);
-    PS.color(PS.ALL, PS.ALL, GAME.BG_COLOR);
+	PS.audioLoad("fx_drip1",{lock:true});
+	PS.audioLoad("fx_tada",{lock:true});
 
-    GAME.loadStage();
-    GAME.spawnBall();
-
-    PS.timerStart(2, GAME.update);
+	RAIN.loadLevel();
+	PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
 };
 
-// ---------- INPUT ----------
-PS.touch = function () {
-    GAME.shoot();
+//-----------------------------------------
+// INPUT
+//-----------------------------------------
+
+PS.touch = function (x,y) {
+
+	if (RAIN.ballActive) return;
+	if (RAIN.isWall(x,y)) return;
+	if (RAIN.inHoleBuffer(x,y)) return;
+
+	RAIN.ballActive = true;
+	RAIN.ballX = x;
+	RAIN.ballY = y;
+
+	RAIN.ballVX = RAIN.shotVX;
+	RAIN.ballVY = RAIN.shotVY;
+
+	PS.audioPlay("fx_drip1");
 };
