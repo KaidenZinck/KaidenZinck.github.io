@@ -1,4 +1,4 @@
-// MiniGolf Prototype – Enclosed Course + True Tile Collision + Momentum
+// MiniGolf – Time-Based Momentum + Perfect Wall Collision
 
 /*jslint nomen: true, white: true */
 /*global PS */
@@ -6,12 +6,16 @@
 var RAIN = {
 
 	//-----------------------------------------
-	// GRID + COLORS
+	// GRID
 	//-----------------------------------------
 
 	GRID_WIDTH: 24,
 	GRID_HEIGHT: 24,
 	FRAME_RATE: 6,
+
+	//-----------------------------------------
+	// COLORS
+	//-----------------------------------------
 
 	BG_COLOR: PS.COLOR_GREEN,
 	WALL_COLOR: PS.COLOR_GRAY,
@@ -23,9 +27,10 @@ var RAIN = {
 	//-----------------------------------------
 
 	friction: 0.985,
+	shotPower: 1.4,
 
 	//-----------------------------------------
-	// BALL STATE
+	// BALL
 	//-----------------------------------------
 
 	ballActive: false,
@@ -39,8 +44,8 @@ var RAIN = {
 	//-----------------------------------------
 
 	walls: [],
-	holeX: 0,
-	holeY: 0,
+	holeX: 14,
+	holeY: 16,
 	holeSize: 2,
 
 	won: false,
@@ -50,26 +55,21 @@ var RAIN = {
 	//-----------------------------------------
 
 	addWall : function ( x, y ) {
-		"use strict";
-		RAIN.walls.push( { x: x, y: y } );
+		RAIN.walls.push({ x:x, y:y });
 	},
 
 	addWallRect : function ( x, y, w, h ) {
-		"use strict";
 		var i, j;
-
-		for ( i = 0; i < w; i += 1 ) {
-			for ( j = 0; j < h; j += 1 ) {
-				RAIN.addWall( x + i, y + j );
+		for ( i = 0; i < w; i++ ) {
+			for ( j = 0; j < h; j++ ) {
+				RAIN.addWall(x+i, y+j);
 			}
 		}
 	},
 
 	isWall : function ( x, y ) {
-		"use strict";
 		var i, w;
-
-		for ( i = 0; i < RAIN.walls.length; i += 1 ) {
+		for ( i = 0; i < RAIN.walls.length; i++ ) {
 			w = RAIN.walls[i];
 			if ( w.x === x && w.y === y ) {
 				return true;
@@ -79,12 +79,10 @@ var RAIN = {
 	},
 
 	drawWalls : function () {
-		"use strict";
 		var i, w;
-
-		for ( i = 0; i < RAIN.walls.length; i += 1 ) {
+		for ( i = 0; i < RAIN.walls.length; i++ ) {
 			w = RAIN.walls[i];
-			PS.color( w.x, w.y, RAIN.WALL_COLOR );
+			PS.color(w.x, w.y, RAIN.WALL_COLOR);
 		}
 	},
 
@@ -93,19 +91,15 @@ var RAIN = {
 	//-----------------------------------------
 
 	drawHole : function () {
-		"use strict";
-		var x, y;
-
-		for ( x = 0; x < RAIN.holeSize; x += 1 ) {
-			for ( y = 0; y < RAIN.holeSize; y += 1 ) {
-				PS.color( RAIN.holeX + x, RAIN.holeY + y, RAIN.HOLE_COLOR );
+		var x,y;
+		for ( x=0; x<RAIN.holeSize; x++ ) {
+			for ( y=0; y<RAIN.holeSize; y++ ) {
+				PS.color(RAIN.holeX+x, RAIN.holeY+y, RAIN.HOLE_COLOR);
 			}
 		}
 	},
 
-	inHole : function ( x, y ) {
-		"use strict";
-
+	inHole : function (x,y) {
 		return (
 			x >= RAIN.holeX &&
 			x < RAIN.holeX + RAIN.holeSize &&
@@ -115,49 +109,30 @@ var RAIN = {
 	},
 
 	//-----------------------------------------
-	// LEVEL LAYOUT
+	// LEVEL
 	//-----------------------------------------
 
 	loadLevel : function () {
-		"use strict";
+
 		var i;
 
 		RAIN.walls = [];
-		PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+		PS.color(PS.ALL, PS.ALL, RAIN.BG_COLOR);
 
-		//---------------------------------
-		// OUTER BORDER (No Escape)
-		//---------------------------------
-
-		for ( i = 0; i < RAIN.GRID_WIDTH; i += 1 ) {
-			RAIN.addWall( i, 0 );
-			RAIN.addWall( i, RAIN.GRID_HEIGHT - 1 );
+		// Outer border
+		for ( i=0;i<RAIN.GRID_WIDTH;i++ ) {
+			RAIN.addWall(i,0);
+			RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
+		}
+		for ( i=0;i<RAIN.GRID_HEIGHT;i++ ) {
+			RAIN.addWall(0,i);
+			RAIN.addWall(RAIN.GRID_WIDTH-1,i);
 		}
 
-		for ( i = 0; i < RAIN.GRID_HEIGHT; i += 1 ) {
-			RAIN.addWall( 0, i );
-			RAIN.addWall( RAIN.GRID_WIDTH - 1, i );
-		}
-
-		//---------------------------------
-		// COURSE SHAPE (Grey Layout)
-		//---------------------------------
-
-		// Top horizontal
-		RAIN.addWallRect( 4, 6, 14, 1 );
-
-		// Left vertical
-		RAIN.addWallRect( 4, 6, 1, 13 );
-
-		// Middle bar
-		RAIN.addWallRect( 9, 12, 8, 1 );
-
-		//---------------------------------
-		// HOLE INSIDE COURSE
-		//---------------------------------
-
-		RAIN.holeX = 14;
-		RAIN.holeY = 16;
+		// Course shape (grey Γ + bar)
+		RAIN.addWallRect(4,6,14,1);
+		RAIN.addWallRect(4,6,1,13);
+		RAIN.addWallRect(9,12,8,1);
 
 		RAIN.drawWalls();
 		RAIN.drawHole();
@@ -168,14 +143,20 @@ var RAIN = {
 	//-----------------------------------------
 
 	reset : function () {
-		"use strict";
-
 		RAIN.ballActive = false;
 		RAIN.won = false;
-
 		RAIN.loadLevel();
+		PS.statusText("Tap to shoot");
+	},
 
-		PS.statusText( "Tap anywhere to shoot" );
+	//-----------------------------------------
+	// SAFE ERASE
+	//-----------------------------------------
+
+	eraseBall : function (x,y){
+		if ( !RAIN.isWall(x,y) && !RAIN.inHole(x,y) ) {
+			PS.color(x,y,RAIN.BG_COLOR);
+		}
 	},
 
 	//-----------------------------------------
@@ -183,62 +164,63 @@ var RAIN = {
 	//-----------------------------------------
 
 	tick : function () {
-		"use strict";
 
-		var x, y, vx, vy, nx, ny;
+		var x,y,vx,vy;
+		var steps, stepX, stepY, i;
 
-		if ( !RAIN.ballActive || RAIN.won ) {
-			return;
-		}
+		if ( !RAIN.ballActive || RAIN.won ) return;
 
 		x = RAIN.ballX;
 		y = RAIN.ballY;
 		vx = RAIN.ballVX;
 		vy = RAIN.ballVY;
 
-		PS.color( x, y, RAIN.BG_COLOR );
+		RAIN.eraseBall(x,y);
 
-		// friction
+		// friction = time based momentum loss
 		vx *= RAIN.friction;
 		vy *= RAIN.friction;
 
-		if ( Math.abs( vx ) < 0.02 && Math.abs( vy ) < 0.02 ) {
+		if ( Math.abs(vx) < 0.02 && Math.abs(vy) < 0.02 ){
 			RAIN.ballActive = false;
 			return;
 		}
 
-		nx = Math.round( x + vx );
-		ny = Math.round( y + vy );
+		// Sub-step movement prevents wall skipping
+		steps = Math.ceil(Math.max(Math.abs(vx),Math.abs(vy)));
+		stepX = vx / steps;
+		stepY = vy / steps;
 
-		// wall bounce X
-		if ( RAIN.isWall( nx, y ) ) {
-			vx = -vx;
-		}
-		else {
-			x += vx;
+		for ( i=0;i<steps;i++ ){
+
+			if ( !RAIN.isWall(Math.round(x+stepX), Math.round(y)) ){
+				x += stepX;
+			}else{
+				vx = -vx;
+				break;
+			}
+
+			if ( !RAIN.isWall(Math.round(x), Math.round(y+stepY)) ){
+				y += stepY;
+			}else{
+				vy = -vy;
+				break;
+			}
 		}
 
-		// wall bounce Y
-		if ( RAIN.isWall( x, ny ) ) {
-			vy = -vy;
-		}
-		else {
-			y += vy;
-		}
-
-		RAIN.ballX = Math.round( x );
-		RAIN.ballY = Math.round( y );
+		RAIN.ballX = Math.round(x);
+		RAIN.ballY = Math.round(y);
 		RAIN.ballVX = vx;
 		RAIN.ballVY = vy;
 
-		if ( RAIN.inHole( RAIN.ballX, RAIN.ballY ) ) {
+		if ( RAIN.inHole(RAIN.ballX,RAIN.ballY) ){
 			RAIN.won = true;
-			PS.statusText( "Nice Shot! Press SPACE to reset" );
-			PS.audioPlay( "fx_tada" );
+			PS.statusText("Nice Shot! Press SPACE");
+			PS.audioPlay("fx_tada");
 			return;
 		}
 
-		PS.color( RAIN.ballX, RAIN.ballY, RAIN.BALL_COLOR );
+		PS.color(RAIN.ballX,RAIN.ballY,RAIN.BALL_COLOR);
 	}
 };
 
@@ -246,51 +228,56 @@ var RAIN = {
 // INIT
 //-----------------------------------------
 
-PS.init = function () {
-	"use strict";
+PS.init = function(){
 
-	PS.gridSize( RAIN.GRID_WIDTH, RAIN.GRID_HEIGHT );
-	PS.gridColor( RAIN.BG_COLOR );
-	PS.border( PS.ALL, PS.ALL, 0 );
-	PS.color( PS.ALL, PS.ALL, RAIN.BG_COLOR );
+	PS.gridSize(RAIN.GRID_WIDTH,RAIN.GRID_HEIGHT);
+	PS.gridColor(RAIN.BG_COLOR);
+	PS.border(PS.ALL,PS.ALL,0);
+	PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
-	PS.audioLoad( "fx_drip1", { lock: true } );
-	PS.audioLoad( "fx_tada", { lock: true } );
+	PS.audioLoad("fx_drip1",{lock:true});
+	PS.audioLoad("fx_tada",{lock:true});
 
 	RAIN.loadLevel();
 
-	PS.statusText( "Tap anywhere to shoot" );
+	PS.statusText("Tap to shoot");
 
-	PS.timerStart( RAIN.FRAME_RATE, RAIN.tick );
+	PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
 };
 
 //-----------------------------------------
 // INPUT
 //-----------------------------------------
 
-PS.touch = function ( x, y ) {
-	"use strict";
+PS.touch = function(x,y){
 
-	if ( RAIN.ballActive || RAIN.won ) {
-		return;
-	}
+	var cx, cy, dx, dy, len;
+
+	if (RAIN.ballActive || RAIN.won) return;
 
 	RAIN.ballActive = true;
-	RAIN.ballX = x;
-	RAIN.ballY = y;
 
-	// Shoot toward hole slightly
-	RAIN.ballVX = ( RAIN.holeX - x ) * 0.07;
-	RAIN.ballVY = ( RAIN.holeY - y ) * 0.07;
+	// Shoot from center toward tap (constant power)
+	cx = 12;
+	cy = 12;
 
-	PS.color( x, y, RAIN.BALL_COLOR );
-	PS.audioPlay( "fx_drip1" );
+	dx = x - cx;
+	dy = y - cy;
+
+	len = Math.sqrt(dx*dx + dy*dy);
+	if ( len === 0 ) len = 1;
+
+	RAIN.ballX = cx;
+	RAIN.ballY = cy;
+
+	RAIN.ballVX = (dx/len) * RAIN.shotPower;
+	RAIN.ballVY = (dy/len) * RAIN.shotPower;
+
+	PS.audioPlay("fx_drip1");
 };
 
-PS.keyDown = function ( key ) {
-	"use strict";
-
-	if ( key === PS.KEY_SPACE ) {
+PS.keyDown = function(key){
+	if ( key === PS.KEY_SPACE ){
 		RAIN.reset();
 	}
 };
