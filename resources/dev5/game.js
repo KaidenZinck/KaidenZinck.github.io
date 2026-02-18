@@ -1,281 +1,277 @@
-// MiniGolf – Time-Based Momentum + Perfect Wall Collision
+// MiniGolf – Multi Level + Hole Safety Zone + Fixed Shot Direction
 
-/*jslint nomen: true, white: true */
 /*global PS */
 
 var RAIN = {
 
-	//-----------------------------------------
-	// GRID
-	//-----------------------------------------
+GRID_WIDTH: 24,
+GRID_HEIGHT: 24,
+FRAME_RATE: 6,
 
-	GRID_WIDTH: 24,
-	GRID_HEIGHT: 24,
-	FRAME_RATE: 6,
+BG_COLOR: PS.COLOR_GREEN,
+WALL_COLOR: PS.COLOR_GRAY,
+HOLE_COLOR: PS.COLOR_BLACK,
+BALL_COLOR: PS.COLOR_WHITE,
 
-	//-----------------------------------------
-	// COLORS
-	//-----------------------------------------
+friction: 0.985,
+shotPower: 1.4,
 
-	BG_COLOR: PS.COLOR_GREEN,
-	WALL_COLOR: PS.COLOR_GRAY,
-	HOLE_COLOR: PS.COLOR_BLACK,
-	BALL_COLOR: PS.COLOR_WHITE,
+ballActive:false,
+ballX:0,
+ballY:0,
+ballVX:0,
+ballVY:0,
 
-	//-----------------------------------------
-	// PHYSICS
-	//-----------------------------------------
+walls:[],
+holeX:18,
+holeY:18,
+holeSize:2,
 
-	friction: 0.985,
-	shotPower: 1.4,
+holeSafeRadius:3,
 
-	//-----------------------------------------
-	// BALL
-	//-----------------------------------------
+won:false,
+level:0,
 
-	ballActive: false,
-	ballX: 0,
-	ballY: 0,
-	ballVX: 0,
-	ballVY: 0,
+//---------------- WALLS ----------------
 
-	//-----------------------------------------
-	// COURSE
-	//-----------------------------------------
+addWall:function(x,y){
+RAIN.walls.push({x:x,y:y});
+},
 
-	walls: [],
-	holeX: 14,
-	holeY: 16,
-	holeSize: 2,
+addWallRect:function(x,y,w,h){
+var i,j;
+for(i=0;i<w;i++){
+for(j=0;j<h;j++){
+RAIN.addWall(x+i,y+j);
+}
+}
+},
 
-	won: false,
+isWall:function(x,y){
+var i,w;
+for(i=0;i<RAIN.walls.length;i++){
+w=RAIN.walls[i];
+if(w.x===x && w.y===y) return true;
+}
+return false;
+},
 
-	//-----------------------------------------
-	// WALL HELPERS
-	//-----------------------------------------
+drawWalls:function(){
+var i,w;
+for(i=0;i<RAIN.walls.length;i++){
+w=RAIN.walls[i];
+PS.color(w.x,w.y,RAIN.WALL_COLOR);
+}
+},
 
-	addWall : function ( x, y ) {
-		RAIN.walls.push({ x:x, y:y });
-	},
+//---------------- HOLE ----------------
 
-	addWallRect : function ( x, y, w, h ) {
-		var i, j;
-		for ( i = 0; i < w; i++ ) {
-			for ( j = 0; j < h; j++ ) {
-				RAIN.addWall(x+i, y+j);
-			}
-		}
-	},
+drawHole:function(){
+var x,y;
+for(x=0;x<RAIN.holeSize;x++){
+for(y=0;y<RAIN.holeSize;y++){
+PS.color(RAIN.holeX+x,RAIN.holeY+y,RAIN.HOLE_COLOR);
+}
+}
+},
 
-	isWall : function ( x, y ) {
-		var i, w;
-		for ( i = 0; i < RAIN.walls.length; i++ ) {
-			w = RAIN.walls[i];
-			if ( w.x === x && w.y === y ) {
-				return true;
-			}
-		}
-		return false;
-	},
+inHole:function(x,y){
+return(
+x>=RAIN.holeX &&
+x<RAIN.holeX+RAIN.holeSize &&
+y>=RAIN.holeY &&
+y<RAIN.holeY+RAIN.holeSize
+);
+},
 
-	drawWalls : function () {
-		var i, w;
-		for ( i = 0; i < RAIN.walls.length; i++ ) {
-			w = RAIN.walls[i];
-			PS.color(w.x, w.y, RAIN.WALL_COLOR);
-		}
-	},
+inHoleSafeZone:function(x,y){
+var cx = RAIN.holeX + 1;
+var cy = RAIN.holeY + 1;
+var dx = x - cx;
+var dy = y - cy;
+return Math.sqrt(dx*dx+dy*dy) < RAIN.holeSafeRadius;
+},
 
-	//-----------------------------------------
-	// HOLE
-	//-----------------------------------------
+//---------------- LEVELS ----------------
 
-	drawHole : function () {
-		var x,y;
-		for ( x=0; x<RAIN.holeSize; x++ ) {
-			for ( y=0; y<RAIN.holeSize; y++ ) {
-				PS.color(RAIN.holeX+x, RAIN.holeY+y, RAIN.HOLE_COLOR);
-			}
-		}
-	},
+loadLevel:function(){
 
-	inHole : function (x,y) {
-		return (
-			x >= RAIN.holeX &&
-			x < RAIN.holeX + RAIN.holeSize &&
-			y >= RAIN.holeY &&
-			y < RAIN.holeY + RAIN.holeSize
-		);
-	},
+var i;
+RAIN.walls=[];
+PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
-	//-----------------------------------------
-	// LEVEL
-	//-----------------------------------------
+// Border always
+for(i=0;i<RAIN.GRID_WIDTH;i++){
+RAIN.addWall(i,0);
+RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
+}
+for(i=0;i<RAIN.GRID_HEIGHT;i++){
+RAIN.addWall(0,i);
+RAIN.addWall(RAIN.GRID_WIDTH-1,i);
+}
 
-	loadLevel : function () {
+// -------- LEVEL 1 --------
+if(RAIN.level===0){
 
-		var i;
+RAIN.addWallRect(4,6,14,1);
+RAIN.addWallRect(4,6,1,13);
+RAIN.addWallRect(9,12,8,1);
 
-		RAIN.walls = [];
-		PS.color(PS.ALL, PS.ALL, RAIN.BG_COLOR);
+RAIN.holeX=17;
+RAIN.holeY=16;
+}
 
-		// Outer border
-		for ( i=0;i<RAIN.GRID_WIDTH;i++ ) {
-			RAIN.addWall(i,0);
-			RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
-		}
-		for ( i=0;i<RAIN.GRID_HEIGHT;i++ ) {
-			RAIN.addWall(0,i);
-			RAIN.addWall(RAIN.GRID_WIDTH-1,i);
-		}
+// -------- LEVEL 2 --------
+if(RAIN.level===1){
 
-		// Course shape (grey Γ + bar)
-		RAIN.addWallRect(4,6,14,1);
-		RAIN.addWallRect(4,6,1,13);
-		RAIN.addWallRect(9,12,8,1);
+RAIN.addWallRect(3,5,16,1);
+RAIN.addWallRect(3,5,1,15);
+RAIN.addWallRect(3,19,16,1);
+RAIN.addWallRect(18,5,1,15);
 
-		RAIN.drawWalls();
-		RAIN.drawHole();
-	},
+RAIN.addWallRect(6,10,10,1);
 
-	//-----------------------------------------
-	// RESET
-	//-----------------------------------------
+RAIN.holeX=16;
+RAIN.holeY=17;
+}
 
-	reset : function () {
-		RAIN.ballActive = false;
-		RAIN.won = false;
-		RAIN.loadLevel();
-		PS.statusText("Tap to shoot");
-	},
+// -------- LEVEL 3 --------
+if(RAIN.level===2){
 
-	//-----------------------------------------
-	// SAFE ERASE
-	//-----------------------------------------
+RAIN.addWallRect(3,3,18,1);
+RAIN.addWallRect(3,3,1,18);
+RAIN.addWallRect(3,20,18,1);
+RAIN.addWallRect(20,3,1,18);
 
-	eraseBall : function (x,y){
-		if ( !RAIN.isWall(x,y) && !RAIN.inHole(x,y) ) {
-			PS.color(x,y,RAIN.BG_COLOR);
-		}
-	},
+RAIN.addWallRect(6,6,10,1);
+RAIN.addWallRect(6,6,1,10);
+RAIN.addWallRect(10,12,8,1);
 
-	//-----------------------------------------
-	// GAME LOOP
-	//-----------------------------------------
+RAIN.holeX=18;
+RAIN.holeY=18;
+}
 
-	tick : function () {
+RAIN.drawWalls();
+RAIN.drawHole();
+},
 
-		var x,y,vx,vy;
-		var steps, stepX, stepY, i;
+//---------------- RESET ----------------
 
-		if ( !RAIN.ballActive || RAIN.won ) return;
+reset:function(){
+RAIN.ballActive=false;
+RAIN.won=false;
+RAIN.loadLevel();
+PS.statusText("Level "+(RAIN.level+1)+" - Tap to place ball");
+},
 
-		x = RAIN.ballX;
-		y = RAIN.ballY;
-		vx = RAIN.ballVX;
-		vy = RAIN.ballVY;
+//---------------- ERASE SAFE ----------------
 
-		RAIN.eraseBall(x,y);
+eraseBall:function(x,y){
+if(!RAIN.isWall(x,y) && !RAIN.inHole(x,y)){
+PS.color(x,y,RAIN.BG_COLOR);
+}
+},
 
-		// friction = time based momentum loss
-		vx *= RAIN.friction;
-		vy *= RAIN.friction;
+//---------------- GAME LOOP ----------------
 
-		if ( Math.abs(vx) < 0.02 && Math.abs(vy) < 0.02 ){
-			RAIN.ballActive = false;
-			return;
-		}
+tick:function(){
 
-		// Sub-step movement prevents wall skipping
-		steps = Math.ceil(Math.max(Math.abs(vx),Math.abs(vy)));
-		stepX = vx / steps;
-		stepY = vy / steps;
+var x,y,vx,vy;
+var steps,stepX,stepY,i;
 
-		for ( i=0;i<steps;i++ ){
+if(!RAIN.ballActive || RAIN.won) return;
 
-			if ( !RAIN.isWall(Math.round(x+stepX), Math.round(y)) ){
-				x += stepX;
-			}else{
-				vx = -vx;
-				break;
-			}
+x=RAIN.ballX;
+y=RAIN.ballY;
+vx=RAIN.ballVX;
+vy=RAIN.ballVY;
 
-			if ( !RAIN.isWall(Math.round(x), Math.round(y+stepY)) ){
-				y += stepY;
-			}else{
-				vy = -vy;
-				break;
-			}
-		}
+RAIN.eraseBall(x,y);
 
-		RAIN.ballX = Math.round(x);
-		RAIN.ballY = Math.round(y);
-		RAIN.ballVX = vx;
-		RAIN.ballVY = vy;
+vx*=RAIN.friction;
+vy*=RAIN.friction;
 
-		if ( RAIN.inHole(RAIN.ballX,RAIN.ballY) ){
-			RAIN.won = true;
-			PS.statusText("Nice Shot! Press SPACE");
-			PS.audioPlay("fx_tada");
-			return;
-		}
+if(Math.abs(vx)<0.02 && Math.abs(vy)<0.02){
+RAIN.ballActive=false;
+return;
+}
 
-		PS.color(RAIN.ballX,RAIN.ballY,RAIN.BALL_COLOR);
-	}
+steps=Math.ceil(Math.max(Math.abs(vx),Math.abs(vy)));
+stepX=vx/steps;
+stepY=vy/steps;
+
+for(i=0;i<steps;i++){
+
+if(!RAIN.isWall(Math.round(x+stepX),Math.round(y))){
+x+=stepX;
+}else{
+vx=-vx;
+}
+
+if(!RAIN.isWall(Math.round(x),Math.round(y+stepY))){
+y+=stepY;
+}else{
+vy=-vy;
+}
+}
+
+RAIN.ballX=Math.round(x);
+RAIN.ballY=Math.round(y);
+RAIN.ballVX=vx;
+RAIN.ballVY=vy;
+
+if(RAIN.inHole(RAIN.ballX,RAIN.ballY)){
+RAIN.won=true;
+PS.statusText("Hole Complete!");
+
+PS.timerStart(60,function(){
+RAIN.level++;
+if(RAIN.level>2) RAIN.level=0;
+RAIN.reset();
+});
+
+return;
+}
+
+PS.color(RAIN.ballX,RAIN.ballY,RAIN.BALL_COLOR);
+}
+
 };
 
-//-----------------------------------------
-// INIT
-//-----------------------------------------
+//---------------- INIT ----------------
 
-PS.init = function(){
+PS.init=function(){
 
-	PS.gridSize(RAIN.GRID_WIDTH,RAIN.GRID_HEIGHT);
-	PS.gridColor(RAIN.BG_COLOR);
-	PS.border(PS.ALL,PS.ALL,0);
-	PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
+PS.gridSize(RAIN.GRID_WIDTH,RAIN.GRID_HEIGHT);
+PS.gridColor(RAIN.BG_COLOR);
+PS.border(PS.ALL,PS.ALL,0);
+PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
 
-	PS.audioLoad("fx_drip1",{lock:true});
-	PS.audioLoad("fx_tada",{lock:true});
+RAIN.reset();
 
-	RAIN.loadLevel();
-
-	PS.statusText("Tap to shoot");
-
-	PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
+PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
 };
 
-//-----------------------------------------
-// INPUT
-//-----------------------------------------
+//---------------- INPUT ----------------
 
-PS.touch = function(x,y){
+PS.touch=function(x,y){
 
-	var dx, dy, len;
+if(RAIN.ballActive || RAIN.won) return;
 
-	if (RAIN.ballActive || RAIN.won) return;
+// Prevent spawn near hole
+if(RAIN.inHoleSafeZone(x,y)) return;
 
-	RAIN.ballActive = true;
+RAIN.ballActive=true;
+RAIN.ballX=x;
+RAIN.ballY=y;
 
-	// Spawn exactly where player tapped
-	RAIN.ballX = x;
-	RAIN.ballY = y;
-
-	// Shoot toward hole (constant speed, NOT distance based)
-	dx = RAIN.holeX - x;
-	dy = RAIN.holeY - y;
-
-	len = Math.sqrt(dx*dx + dy*dy);
-	if (len === 0) len = 1;
-
-	RAIN.ballVX = (dx/len) * RAIN.shotPower;
-	RAIN.ballVY = (dy/len) * RAIN.shotPower;
-
-	PS.audioPlay("fx_drip1");
+// ALWAYS diagonal down right
+RAIN.ballVX=RAIN.shotPower;
+RAIN.ballVY=RAIN.shotPower;
 };
 
-PS.keyDown = function(key){
-	if ( key === PS.KEY_SPACE ){
-		RAIN.reset();
-	}
+PS.keyDown=function(key){
+if(key===PS.KEY_SPACE){
+RAIN.reset();
+}
 };
