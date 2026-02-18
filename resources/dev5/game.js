@@ -1,277 +1,209 @@
-// MiniGolf – Multi Level + Hole Safety Zone + Fixed Shot Direction
-
-/*global PS */
+// Mini Golf Multi-Level - Stable Physics Version
 
 var RAIN = {
 
-GRID_WIDTH: 24,
-GRID_HEIGHT: 24,
-FRAME_RATE: 6,
+    GRID_WIDTH : 24,
+    GRID_HEIGHT : 24,
 
-BG_COLOR: PS.COLOR_GREEN,
-WALL_COLOR: PS.COLOR_GRAY,
-HOLE_COLOR: PS.COLOR_BLACK,
-BALL_COLOR: PS.COLOR_WHITE,
+    ballX : 0,
+    ballY : 0,
+    ballVX : 0,
+    ballVY : 0,
+    ballActive : false,
 
-friction: 0.985,
-shotPower: 1.4,
+    shotPower : 0.8,
+    friction : 0.985,
 
-ballActive:false,
-ballX:0,
-ballY:0,
-ballVX:0,
-ballVY:0,
+    level : 0,
+    transitioning : false,
 
-walls:[],
-holeX:18,
-holeY:18,
-holeSize:2,
+    // Hole safe placement radius
+    holeSafeRadius : 2,
 
-holeSafeRadius:3,
-
-won:false,
-level:0,
-
-//---------------- WALLS ----------------
-
-addWall:function(x,y){
-RAIN.walls.push({x:x,y:y});
-},
-
-addWallRect:function(x,y,w,h){
-var i,j;
-for(i=0;i<w;i++){
-for(j=0;j<h;j++){
-RAIN.addWall(x+i,y+j);
-}
-}
-},
-
-isWall:function(x,y){
-var i,w;
-for(i=0;i<RAIN.walls.length;i++){
-w=RAIN.walls[i];
-if(w.x===x && w.y===y) return true;
-}
-return false;
-},
-
-drawWalls:function(){
-var i,w;
-for(i=0;i<RAIN.walls.length;i++){
-w=RAIN.walls[i];
-PS.color(w.x,w.y,RAIN.WALL_COLOR);
-}
-},
-
-//---------------- HOLE ----------------
-
-drawHole:function(){
-var x,y;
-for(x=0;x<RAIN.holeSize;x++){
-for(y=0;y<RAIN.holeSize;y++){
-PS.color(RAIN.holeX+x,RAIN.holeY+y,RAIN.HOLE_COLOR);
-}
-}
-},
-
-inHole:function(x,y){
-return(
-x>=RAIN.holeX &&
-x<RAIN.holeX+RAIN.holeSize &&
-y>=RAIN.holeY &&
-y<RAIN.holeY+RAIN.holeSize
-);
-},
-
-inHoleSafeZone:function(x,y){
-var cx = RAIN.holeX + 1;
-var cy = RAIN.holeY + 1;
-var dx = x - cx;
-var dy = y - cy;
-return Math.sqrt(dx*dx+dy*dy) < RAIN.holeSafeRadius;
-},
-
-//---------------- LEVELS ----------------
-
-loadLevel:function(){
-
-var i;
-RAIN.walls=[];
-PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
-
-// Border always
-for(i=0;i<RAIN.GRID_WIDTH;i++){
-RAIN.addWall(i,0);
-RAIN.addWall(i,RAIN.GRID_HEIGHT-1);
-}
-for(i=0;i<RAIN.GRID_HEIGHT;i++){
-RAIN.addWall(0,i);
-RAIN.addWall(RAIN.GRID_WIDTH-1,i);
-}
-
-// -------- LEVEL 1 --------
-if(RAIN.level===0){
-
-RAIN.addWallRect(4,6,14,1);
-RAIN.addWallRect(4,6,1,13);
-RAIN.addWallRect(9,12,8,1);
-
-RAIN.holeX=17;
-RAIN.holeY=16;
-}
-
-// -------- LEVEL 2 --------
-if(RAIN.level===1){
-
-RAIN.addWallRect(3,5,16,1);
-RAIN.addWallRect(3,5,1,15);
-RAIN.addWallRect(3,19,16,1);
-RAIN.addWallRect(18,5,1,15);
-
-RAIN.addWallRect(6,10,10,1);
-
-RAIN.holeX=16;
-RAIN.holeY=17;
-}
-
-// -------- LEVEL 3 --------
-if(RAIN.level===2){
-
-RAIN.addWallRect(3,3,18,1);
-RAIN.addWallRect(3,3,1,18);
-RAIN.addWallRect(3,20,18,1);
-RAIN.addWallRect(20,3,1,18);
-
-RAIN.addWallRect(6,6,10,1);
-RAIN.addWallRect(6,6,1,10);
-RAIN.addWallRect(10,12,8,1);
-
-RAIN.holeX=18;
-RAIN.holeY=18;
-}
-
-RAIN.drawWalls();
-RAIN.drawHole();
-},
-
-//---------------- RESET ----------------
-
-reset:function(){
-RAIN.ballActive=false;
-RAIN.won=false;
-RAIN.loadLevel();
-PS.statusText("Level "+(RAIN.level+1)+" - Tap to place ball");
-},
-
-//---------------- ERASE SAFE ----------------
-
-eraseBall:function(x,y){
-if(!RAIN.isWall(x,y) && !RAIN.inHole(x,y)){
-PS.color(x,y,RAIN.BG_COLOR);
-}
-},
-
-//---------------- GAME LOOP ----------------
-
-tick:function(){
-
-var x,y,vx,vy;
-var steps,stepX,stepY,i;
-
-if(!RAIN.ballActive || RAIN.won) return;
-
-x=RAIN.ballX;
-y=RAIN.ballY;
-vx=RAIN.ballVX;
-vy=RAIN.ballVY;
-
-RAIN.eraseBall(x,y);
-
-vx*=RAIN.friction;
-vy*=RAIN.friction;
-
-if(Math.abs(vx)<0.02 && Math.abs(vy)<0.02){
-RAIN.ballActive=false;
-return;
-}
-
-steps=Math.ceil(Math.max(Math.abs(vx),Math.abs(vy)));
-stepX=vx/steps;
-stepY=vy/steps;
-
-for(i=0;i<steps;i++){
-
-if(!RAIN.isWall(Math.round(x+stepX),Math.round(y))){
-x+=stepX;
-}else{
-vx=-vx;
-}
-
-if(!RAIN.isWall(Math.round(x),Math.round(y+stepY))){
-y+=stepY;
-}else{
-vy=-vy;
-}
-}
-
-RAIN.ballX=Math.round(x);
-RAIN.ballY=Math.round(y);
-RAIN.ballVX=vx;
-RAIN.ballVY=vy;
-
-if(RAIN.inHole(RAIN.ballX,RAIN.ballY)){
-RAIN.won=true;
-PS.statusText("Hole Complete!");
-
-PS.timerStart(60,function(){
-RAIN.level++;
-if(RAIN.level>2) RAIN.level=0;
-RAIN.reset();
-});
-
-return;
-}
-
-PS.color(RAIN.ballX,RAIN.ballY,RAIN.BALL_COLOR);
-}
-
+    // LEVEL DATA
+    levels : [
+        {
+            holeX : 20,
+            holeY : 20,
+            walls : [
+                [10,10],[11,10],[12,10],[13,10],
+                [13,11],[13,12],[13,13]
+            ]
+        },
+        {
+            holeX : 3,
+            holeY : 20,
+            walls : [
+                [6,5],[6,6],[6,7],[6,8],
+                [7,8],[8,8],[9,8],
+                [12,15],[13,15],[14,15]
+            ]
+        },
+        {
+            holeX : 20,
+            holeY : 3,
+            walls : [
+                [15,5],[15,6],[15,7],[15,8],
+                [16,5],[17,5],
+                [5,15],[6,15],[7,15]
+            ]
+        }
+    ]
 };
 
-//---------------- INIT ----------------
+////////////////////////////////////////////////////
 
-PS.init=function(){
+RAIN.drawLevel = function() {
 
-PS.gridSize(RAIN.GRID_WIDTH,RAIN.GRID_HEIGHT);
-PS.gridColor(RAIN.BG_COLOR);
-PS.border(PS.ALL,PS.ALL,0);
-PS.color(PS.ALL,PS.ALL,RAIN.BG_COLOR);
+    var lvl = RAIN.levels[RAIN.level];
 
-RAIN.reset();
+    PS.gridSize(RAIN.GRID_WIDTH, RAIN.GRID_HEIGHT);
+    PS.color(PS.ALL, PS.ALL, PS.COLOR_WHITE);
 
-PS.timerStart(RAIN.FRAME_RATE,RAIN.tick);
+    // Draw walls
+    lvl.walls.forEach(function(w){
+        PS.color(w[0], w[1], PS.COLOR_BLACK);
+    });
+
+    // Draw hole
+    PS.color(lvl.holeX, lvl.holeY, PS.COLOR_GREEN);
+
+    PS.statusText("Stage " + (RAIN.level + 1));
 };
 
-//---------------- INPUT ----------------
+////////////////////////////////////////////////////
 
-PS.touch=function(x,y){
-
-if(RAIN.ballActive || RAIN.won) return;
-
-// Prevent spawn near hole
-if(RAIN.inHoleSafeZone(x,y)) return;
-
-RAIN.ballActive=true;
-RAIN.ballX=x;
-RAIN.ballY=y;
-
-// ALWAYS diagonal down right
-RAIN.ballVX=RAIN.shotPower;
-RAIN.ballVY=RAIN.shotPower;
+RAIN.isWall = function(x,y){
+    var lvl = RAIN.levels[RAIN.level];
+    for (var i=0;i<lvl.walls.length;i++){
+        if (lvl.walls[i][0] === x && lvl.walls[i][1] === y){
+            return true;
+        }
+    }
+    return false;
 };
 
-PS.keyDown=function(key){
-if(key===PS.KEY_SPACE){
-RAIN.reset();
-}
+////////////////////////////////////////////////////
+
+RAIN.nearHole = function(x,y){
+    var lvl = RAIN.levels[RAIN.level];
+
+    return (
+        Math.abs(x - lvl.holeX) <= RAIN.holeSafeRadius &&
+        Math.abs(y - lvl.holeY) <= RAIN.holeSafeRadius
+    );
+};
+
+////////////////////////////////////////////////////
+
+RAIN.nextLevel = function(){
+
+    if (RAIN.transitioning) return;
+
+    RAIN.transitioning = true;
+
+    setTimeout(function(){
+
+        RAIN.level++;
+
+        if (RAIN.level >= RAIN.levels.length){
+            PS.statusText("You Win!");
+            return;
+        }
+
+        RAIN.ballActive = false;
+        RAIN.transitioning = false;
+        RAIN.drawLevel();
+
+    }, 1000);
+};
+
+////////////////////////////////////////////////////
+
+RAIN.updateBall = function(){
+
+    if (!RAIN.ballActive) return;
+
+    PS.color(Math.floor(RAIN.ballX), Math.floor(RAIN.ballY), PS.COLOR_WHITE);
+
+    var nextX = RAIN.ballX + RAIN.ballVX;
+    var nextY = RAIN.ballY + RAIN.ballVY;
+
+    var nx = Math.floor(nextX);
+    var ny = Math.floor(nextY);
+
+    // WALL COLLISION (Prevents Riding)
+    if (RAIN.isWall(nx, Math.floor(RAIN.ballY))){
+        RAIN.ballVX *= -1;
+        nextX = RAIN.ballX + RAIN.ballVX;
+    }
+
+    if (RAIN.isWall(Math.floor(RAIN.ballX), ny)){
+        RAIN.ballVY *= -1;
+        nextY = RAIN.ballY + RAIN.ballVY;
+    }
+
+    // Corner hit
+    if (RAIN.isWall(nx, ny)){
+        RAIN.ballVX *= -1;
+        RAIN.ballVY *= -1;
+        nextX = RAIN.ballX + RAIN.ballVX;
+        nextY = RAIN.ballY + RAIN.ballVY;
+    }
+
+    RAIN.ballX = nextX;
+    RAIN.ballY = nextY;
+
+    // Friction
+    RAIN.ballVX *= RAIN.friction;
+    RAIN.ballVY *= RAIN.friction;
+
+    if (Math.abs(RAIN.ballVX) < 0.01 && Math.abs(RAIN.ballVY) < 0.01){
+        RAIN.ballActive = false;
+    }
+
+    var lvl = RAIN.levels[RAIN.level];
+
+    // Hole detection (ONLY ONCE)
+    if (!RAIN.transitioning &&
+        Math.floor(RAIN.ballX) === lvl.holeX &&
+        Math.floor(RAIN.ballY) === lvl.holeY){
+
+        PS.audioPlay("fx_tada");
+        RAIN.ballActive = false;
+        RAIN.nextLevel();
+        return;
+    }
+
+    PS.color(Math.floor(RAIN.ballX), Math.floor(RAIN.ballY), PS.COLOR_BLUE);
+};
+
+////////////////////////////////////////////////////
+
+PS.init = function(){
+    PS.timerStart(1, RAIN.updateBall);
+    RAIN.drawLevel();
+};
+
+////////////////////////////////////////////////////
+
+PS.touch = function(x,y){
+
+    if (RAIN.ballActive || RAIN.transitioning) return;
+
+    if (RAIN.isWall(x,y)) return;
+
+    if (RAIN.nearHole(x,y)) return;
+
+    // Spawn at tap
+    RAIN.ballX = x;
+    RAIN.ballY = y;
+
+    // ALWAYS diagonal down-right
+    RAIN.ballVX = RAIN.shotPower;
+    RAIN.ballVY = RAIN.shotPower;
+
+    RAIN.ballActive = true;
+
+    PS.audioPlay("fx_blip");
 };
