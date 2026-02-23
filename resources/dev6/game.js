@@ -54,7 +54,7 @@ function startGame() {
 
     GAME.state = GAME.STATE_PLAY;
     GAME.timeSurvived = 0;
-    GAME.speed = 0.04;
+    GAME.speed = 0.08;
 
     PS.color(PS.ALL, PS.ALL, 0x5a3e1b);
     PS.glyph(PS.ALL, PS.ALL, "");
@@ -63,7 +63,7 @@ function startGame() {
     createMoles();
     drawGrass();
 
-    GAME.timer = PS.timerStart(6, update);
+    GAME.timer = PS.timerStart(4, update);
 }
 
 ////////////////////////////////////////////////////////////
@@ -135,7 +135,7 @@ function update() {
     PS.statusText("Survive: " + Math.floor(GAME.timeSurvived) + " / 45 seconds");
 
     if (GAME.speed < GAME.maxSpeed) {
-        GAME.speed += 0.0004;  // faster ramp
+        GAME.speed += 0.0015;  // faster ramp
     }
 
     redrawTunnels();
