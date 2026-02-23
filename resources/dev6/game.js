@@ -11,6 +11,7 @@ var GAME = {
     STATE_TITLE: 0,
     STATE_PLAY: 1,
     STATE_OVER: 2,
+    STATE_WIN: 3,
 
     state: 0,
 
@@ -18,11 +19,18 @@ var GAME = {
     moles: [],
     tunnels: [],
 
-    speed: 0.03,
-    maxSpeed: 0.2,
+    speed: 0.02,        // slower start
+    maxSpeed: 0.08,     // much less aggressive
+    riseChance: 2,      // lower random trigger %
 
-    timer: null
+    timer: null,
+    timeSurvived: 0,
+    winTime: 25
 };
+
+////////////////////////////////////////////////////////////
+// INIT
+////////////////////////////////////////////////////////////
 
 PS.init = function () {
     PS.gridSize(GAME.WIDTH, GAME.HEIGHT);
@@ -38,36 +46,43 @@ PS.init = function () {
 function showTitle() {
 
     GAME.state = GAME.STATE_TITLE;
-
-    PS.gridColor(0x5a3e1b);
     PS.color(PS.ALL, PS.ALL, 0x5a3e1b);
     PS.glyph(PS.ALL, PS.ALL, "");
-
-    PS.statusText("MOLE PATROL - Click to Start Digging");
-
-    PS.glyph(12, 8, "M");
-    PS.glyphColor(12, 8, PS.COLOR_BLACK);
+    PS.statusText("MOLE PATROL - Click to Start");
 }
 
 ////////////////////////////////////////////////////////////
-// START
+// START GAME
 ////////////////////////////////////////////////////////////
 
 function startGame() {
 
     GAME.state = GAME.STATE_PLAY;
-    GAME.speed = 0.03;
+    GAME.speed = 0.02;
+    GAME.timeSurvived = 0;
 
-    PS.statusText("Stop the moles!");
+    PS.color(PS.ALL, PS.ALL, 0x5a3e1b);
+    PS.glyph(PS.ALL, PS.ALL, "");
 
     createTunnels();
     createMoles();
+    drawGrass();
 
-    GAME.timer = PS.timerStart(2, update);
+    GAME.timer = PS.timerStart(6, update); // slower timer
 }
 
 ////////////////////////////////////////////////////////////
-// TUNNELS
+// DRAW GRASS
+////////////////////////////////////////////////////////////
+
+function drawGrass() {
+    for (let x = 0; x < GAME.WIDTH; x++) {
+        PS.color(x, 2, 0x2ecc40);
+    }
+}
+
+////////////////////////////////////////////////////////////
+// CREATE TUNNELS
 ////////////////////////////////////////////////////////////
 
 function createTunnels() {
@@ -78,11 +93,15 @@ function createTunnels() {
     for (let i = 0; i < GAME.moleCount; i++) {
         let x = Math.floor((i + 1) * spacing);
         GAME.tunnels.push(x);
+
+        for (let y = 3; y < GAME.HEIGHT; y++) {
+            PS.color(x, y, 0x3b2a14);
+        }
     }
 }
 
 ////////////////////////////////////////////////////////////
-// MOLES
+// CREATE MOLES
 ////////////////////////////////////////////////////////////
 
 function createMoles() {
@@ -92,7 +111,7 @@ function createMoles() {
     for (let i = 0; i < GAME.moleCount; i++) {
 
         let sprite = PS.spriteSolid(1, 1);
-        PS.spriteSolidAlpha(sprite, 0); // invisible sprite
+        PS.spriteSolidAlpha(sprite, 0);
 
         let x = GAME.tunnels[i];
         let y = GAME.HEIGHT - 1;
@@ -109,22 +128,36 @@ function createMoles() {
 }
 
 ////////////////////////////////////////////////////////////
-// UPDATE
+// UPDATE LOOP
 ////////////////////////////////////////////////////////////
 
 function update() {
 
-    if (GAME.speed < GAME.maxSpeed) {
-        GAME.speed += 0.0005;
+    if (GAME.state !== GAME.STATE_PLAY) {
+        return;
     }
 
-    redrawEntireScene();
+    GAME.timeSurvived += 0.1;
+
+    // Win condition
+    if (GAME.timeSurvived >= GAME.winTime) {
+        winGame();
+        return;
+    }
+
+    PS.statusText("Survive: " + Math.floor(GAME.timeSurvived) + " / 25 seconds");
+
+    if (GAME.speed < GAME.maxSpeed) {
+        GAME.speed += 0.0001;
+    }
+
+    redrawTunnels();
 
     for (let i = 0; i < GAME.moles.length; i++) {
 
         let mole = GAME.moles[i];
 
-        if (!mole.rising && PS.random(100) < 4) {
+        if (!mole.rising && PS.random(100) < GAME.riseChance) {
             mole.rising = true;
         }
 
@@ -132,53 +165,40 @@ function update() {
             mole.y -= GAME.speed;
 
             if (mole.y <= 2) {
-                gameOver();
+                loseGame();
                 return;
             }
         }
 
         let drawY = Math.floor(mole.y);
-
         PS.spriteMove(mole.sprite, mole.x, drawY);
 
-        // Draw mole glyph
         PS.glyph(mole.x, drawY, "●");
-        PS.glyphColor(mole.x, drawY, 0x3b2a14);
+        PS.glyphColor(mole.x, drawY, 0x2b1a0d);
     }
 }
 
 ////////////////////////////////////////////////////////////
-// FULL REDRAW (THIS FIXES YOUR BUG)
+// REDRAW TUNNELS (PERMANENT FIX)
 ////////////////////////////////////////////////////////////
 
-function redrawEntireScene() {
+function redrawTunnels() {
 
-    // Fill dirt
-    for (let y = 0; y < GAME.HEIGHT; y++) {
-        for (let x = 0; x < GAME.WIDTH; x++) {
-            PS.color(x, y, 0x5a3e1b);
-            PS.glyph(x, y, "");
-        }
-    }
-
-    // Grass surface
-    for (let x = 0; x < GAME.WIDTH; x++) {
-        PS.color(x, 2, 0x2ecc40);
-    }
-
-    // Tunnels
     for (let i = 0; i < GAME.tunnels.length; i++) {
 
         let x = GAME.tunnels[i];
 
         for (let y = 3; y < GAME.HEIGHT; y++) {
             PS.color(x, y, 0x3b2a14);
+            PS.glyph(x, y, "");
         }
     }
+
+    drawGrass();
 }
 
 ////////////////////////////////////////////////////////////
-// CLICK
+// CLICK HANDLER
 ////////////////////////////////////////////////////////////
 
 PS.touch = function (x, y) {
@@ -188,7 +208,7 @@ PS.touch = function (x, y) {
         return;
     }
 
-    if (GAME.state === GAME.STATE_OVER) {
+    if (GAME.state === GAME.STATE_OVER || GAME.state === GAME.STATE_WIN) {
         showTitle();
         return;
     }
@@ -205,18 +225,33 @@ PS.touch = function (x, y) {
 };
 
 ////////////////////////////////////////////////////////////
-// GAME OVER
+// LOSE
 ////////////////////////////////////////////////////////////
 
-function gameOver() {
+function loseGame() {
 
     PS.timerStop(GAME.timer);
     GAME.state = GAME.STATE_OVER;
 
-    PS.statusText("A mole escaped! Six more weeks of winter ;<  Click to restart.");
+    PS.statusText("A mole escaped! Click to restart.");
 
-    // Flash grass red
     for (let x = 0; x < GAME.WIDTH; x++) {
         PS.color(x, 2, PS.COLOR_RED);
+    }
+}
+
+////////////////////////////////////////////////////////////
+// WIN
+////////////////////////////////////////////////////////////
+
+function winGame() {
+
+    PS.timerStop(GAME.timer);
+    GAME.state = GAME.STATE_WIN;
+
+    PS.statusText("You contained the moles! Click to play again.");
+
+    for (let x = 0; x < GAME.WIDTH; x++) {
+        PS.color(x, 2, 0x00ccff);
     }
 }
