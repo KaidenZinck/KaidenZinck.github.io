@@ -25,7 +25,7 @@ var GAME = {
 
     timer: null,
     timeSurvived: 0,
-    winTime: 25
+    winTime: 45
 };
 
 PS.init = function () {
