@@ -19,9 +19,9 @@ var GAME = {
     moles: [],
     tunnels: [],
 
-    speed: 0.04,        // more aggressive
+    speed: 0.06,        // more aggressive
     maxSpeed: 0.15,
-    riseChance: 6,      // more frequent rises
+    riseChance: 8,      // more frequent rises
 
     timer: null,
     timeSurvived: 0,
@@ -43,7 +43,7 @@ function showTitle() {
     GAME.state = GAME.STATE_TITLE;
     PS.color(PS.ALL, PS.ALL, 0x5a3e1b);
     PS.glyph(PS.ALL, PS.ALL, "");
-    PS.statusText("MOLE PATROL - Click to Start");
+    PS.statusText("STOP THE EVIL MOLES, WE WANT SPRING NOW!!! - Click to Start");
 }
 
 ////////////////////////////////////////////////////////////
@@ -218,10 +218,10 @@ function loseGame() {
     PS.timerStop(GAME.timer);
     GAME.state = GAME.STATE_OVER;
 
-    PS.statusText("A mole escaped! Click to restart.");
+    PS.statusText("A mole escaped! WINTER FOR ANOTHER 6 WEEKS ;<");
 
     for (let x = 0; x < GAME.WIDTH; x++) {
-        PS.color(x, 2, PS.COLOR_RED);
+        PS.color(x, 2, PS.COLOR_WHITE);
     }
 }
 
@@ -234,7 +234,7 @@ function winGame() {
     PS.timerStop(GAME.timer);
     GAME.state = GAME.STATE_WIN;
 
-    PS.statusText("You survived 25 seconds! Click to play again.");
+    PS.statusText("You WON! Spring!!! Click to play again.");
 
     for (let x = 0; x < GAME.WIDTH; x++) {
         PS.color(x, 2, 0x00ccff);
