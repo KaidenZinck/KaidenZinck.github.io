@@ -21,7 +21,7 @@ var GAME = {
 
     speed: 0.06,        // more aggressive
     maxSpeed: 0.15,
-    riseChance: 12,      // more frequent rises
+    riseChance: 15,      // more frequent rises
 
     timer: null,
     timeSurvived: 0,
@@ -218,7 +218,7 @@ function loseGame() {
     PS.timerStop(GAME.timer);
     GAME.state = GAME.STATE_OVER;
 
-    PS.statusText("A mole escaped! WINTER FOR ANOTHER 6 WEEKS ;<");
+    PS.statusText("A mole escaped! 6 WEEKS OF WINTER ;<");
 
     for (let x = 0; x < GAME.WIDTH; x++) {
         PS.color(x, 2, PS.COLOR_WHITE);
