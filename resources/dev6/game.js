@@ -19,9 +19,9 @@ var GAME = {
     moles: [],
     tunnels: [],
 
-    speed: 0.06,        // more aggressive
-    maxSpeed: 0.15,
-    riseChance: 15,      // more frequent rises
+    speed: 0.11,        // more aggressive
+    maxSpeed: 0.2,
+    riseChance: 6,      // more frequent rises
 
     timer: null,
     timeSurvived: 0,
