@@ -24,10 +24,6 @@ var GAME = {
     timer: null
 };
 
-////////////////////////////////////////////////////////////
-// INIT
-////////////////////////////////////////////////////////////
-
 PS.init = function () {
     PS.gridSize(GAME.WIDTH, GAME.HEIGHT);
     PS.border(PS.ALL, PS.ALL, 0);
@@ -40,6 +36,7 @@ PS.init = function () {
 ////////////////////////////////////////////////////////////
 
 function showTitle() {
+
     GAME.state = GAME.STATE_TITLE;
 
     PS.gridColor(0x5a3e1b);
@@ -48,9 +45,8 @@ function showTitle() {
 
     PS.statusText("MOLE PATROL - Click to Start Digging");
 
-    PS.glyph(12, 8, "🐹");
-    PS.glyph(12, 9, "MOLE PATROL");
-    PS.glyphColor(12, 9, PS.COLOR_WHITE);
+    PS.glyph(12, 8, "M");
+    PS.glyphColor(12, 8, PS.COLOR_BLACK);
 }
 
 ////////////////////////////////////////////////////////////
@@ -64,26 +60,10 @@ function startGame() {
 
     PS.statusText("Stop the moles!");
 
-    drawScene();
     createTunnels();
     createMoles();
 
     GAME.timer = PS.timerStart(2, update);
-}
-
-////////////////////////////////////////////////////////////
-// DRAW SCENE
-////////////////////////////////////////////////////////////
-
-function drawScene() {
-
-    PS.color(PS.ALL, PS.ALL, 0x5a3e1b);
-    PS.glyph(PS.ALL, PS.ALL, "");
-
-    // Grass surface
-    for (let x = 0; x < GAME.WIDTH; x++) {
-        PS.color(x, 2, 0x2ecc40);
-    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -112,7 +92,6 @@ function createMoles() {
     for (let i = 0; i < GAME.moleCount; i++) {
 
         let sprite = PS.spriteSolid(1, 1);
-        PS.spriteSolidColor(sprite, PS.COLOR_BLACK);
         PS.spriteSolidAlpha(sprite, 0); // invisible sprite
 
         let x = GAME.tunnels[i];
@@ -130,7 +109,7 @@ function createMoles() {
 }
 
 ////////////////////////////////////////////////////////////
-// UPDATE LOOP
+// UPDATE
 ////////////////////////////////////////////////////////////
 
 function update() {
@@ -139,13 +118,12 @@ function update() {
         GAME.speed += 0.0005;
     }
 
-    redrawTunnels();
+    redrawEntireScene();
 
     for (let i = 0; i < GAME.moles.length; i++) {
 
         let mole = GAME.moles[i];
 
-        // Randomly start rising
         if (!mole.rising && PS.random(100) < 4) {
             mole.rising = true;
         }
@@ -159,33 +137,48 @@ function update() {
             }
         }
 
-        PS.spriteMove(mole.sprite, mole.x, Math.floor(mole.y));
-
-        // Draw mole emoji on bead under sprite
         let drawY = Math.floor(mole.y);
-        PS.glyph(mole.x, drawY, "🐹");
+
+        PS.spriteMove(mole.sprite, mole.x, drawY);
+
+        // Draw mole glyph
+        PS.glyph(mole.x, drawY, "●");
+        PS.glyphColor(mole.x, drawY, 0x3b2a14);
     }
 }
 
 ////////////////////////////////////////////////////////////
-// REDRAW TUNNELS (FIXES DARK BROWN BUG)
+// FULL REDRAW (THIS FIXES YOUR BUG)
 ////////////////////////////////////////////////////////////
 
-function redrawTunnels() {
+function redrawEntireScene() {
 
+    // Fill dirt
+    for (let y = 0; y < GAME.HEIGHT; y++) {
+        for (let x = 0; x < GAME.WIDTH; x++) {
+            PS.color(x, y, 0x5a3e1b);
+            PS.glyph(x, y, "");
+        }
+    }
+
+    // Grass surface
+    for (let x = 0; x < GAME.WIDTH; x++) {
+        PS.color(x, 2, 0x2ecc40);
+    }
+
+    // Tunnels
     for (let i = 0; i < GAME.tunnels.length; i++) {
 
         let x = GAME.tunnels[i];
 
         for (let y = 3; y < GAME.HEIGHT; y++) {
             PS.color(x, y, 0x3b2a14);
-            PS.glyph(x, y, "");
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-// PUSH MOLE
+// CLICK
 ////////////////////////////////////////////////////////////
 
 PS.touch = function (x, y) {
@@ -207,8 +200,6 @@ PS.touch = function (x, y) {
         if (x === mole.x) {
             mole.y = GAME.HEIGHT - 1;
             mole.rising = false;
-            PS.spriteMove(mole.sprite, mole.x, mole.y);
-            PS.audioPlay("fx_click");
         }
     }
 };
@@ -222,8 +213,7 @@ function gameOver() {
     PS.timerStop(GAME.timer);
     GAME.state = GAME.STATE_OVER;
 
-    PS.statusText("A mole escaped! Click to restart.");
-    PS.audioPlay("fx_boom");
+    PS.statusText("A mole escaped! Six more weeks of winter ;<  Click to restart.");
 
     // Flash grass red
     for (let x = 0; x < GAME.WIDTH; x++) {
