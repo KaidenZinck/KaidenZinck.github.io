@@ -132,7 +132,7 @@ function update() {
         return;
     }
 
-    PS.statusText("Survive: " + Math.floor(GAME.timeSurvived) + " / 25 seconds");
+    PS.statusText("Survive: " + Math.floor(GAME.timeSurvived) + " / 45 seconds");
 
     if (GAME.speed < GAME.maxSpeed) {
         GAME.speed += 0.0004;  // faster ramp
